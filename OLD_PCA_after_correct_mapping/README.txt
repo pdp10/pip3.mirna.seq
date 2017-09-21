@@ -1,0 +1,2 @@
+PCA_after_correct_mapping/: PCA over the file of countings containing the correct mapping (mi, WT|A66, 0|15|40|90|180|300|noEGF,1|2|3).
+Here, miWT and miA66 are separated into two groups. 3 lane-sequences did not have any reference, so they are labelled as `unmap`. 2 lane-sequences have a reference but differs by a base, so they are labelled as `base`. The scripts plots all the groups, and all\unmap. 

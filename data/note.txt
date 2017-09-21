@@ -1,0 +1,11 @@
+la prima colonna rappresenta le sequenze di riferimento sulle quali sono state mappate le reads presenti in ciascun campione ( lane1_ACAGTG_L001_R1_trimmed.fq.gz_bowtie.bam.sam
+lane1_ACTTGA_L001_R1_trimmed.fq.gz_bowtie.bam.sam
+lane1_ATCACG_L001_R1_trimmed.fq.gz_bowtie.bam.sam
+...)
+le colonne di ciascun campione rappresentano il numero di conte per ciascuna sequenza di riferimento, ossia il numero di reads mappate su ciascuna sequenza. 
+
+In questo caso le sequenze rappresentano dei micro rna.
+ora, il numero di reads mappate è direttamente proporzionale (anzi in teoria dovrebbe essere uguale) al numero di molecole della sequenza di riferimento presenti nel campione sequenziato.
+
+- se la sequenza di riferimento è di tipo genomico, ossia rappresenta la sequenza di un gene nel genoma, il numero di conte rappresenta il numero di trascritti prodotti da questo gene.
+- se la sequenza di riferimento è quella di un trascritto: il numero di conte rappresenta il numero di questo tipo di trascritti presenti nella soluzione di sequenziamento

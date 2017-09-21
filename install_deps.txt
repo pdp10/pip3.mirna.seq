@@ -1,0 +1,9 @@
+
+# In R 3.2.2
+
+# https://github.com/wilkelab/cowplot/issues/53
+> devtools::install_url("https://github.com/wilkelab/cowplot/archive/0.6.3.zip")
+> install.packages("factoextra")
+
+> install.packages("rgl")
+> install.packages("Rtsne")

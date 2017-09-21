@@ -1,0 +1,2 @@
+We use t-SNE to represent all the EPI cells in the space of gene expression. We choose 2 or 3 dimensions. 
+We write out the coordinates to be re-used in other procedures.
