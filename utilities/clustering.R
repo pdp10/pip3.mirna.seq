@@ -31,7 +31,7 @@ run_pam <- function(df, k, name, scale., centre) {
 
   pamx <- pam(df, k, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
   # Write the calculated clustering. This is the table miRNAs (rows) vs ClusterLabels (cols).
-  write.csv(pamx$clustering, file=paste0(name,k,"_labels.csv"), quote=FALSE)
+  write.csv(pamx$clustering, file=paste0(name, "_labels.csv"), quote=FALSE)
 
   return (pamx)
 }

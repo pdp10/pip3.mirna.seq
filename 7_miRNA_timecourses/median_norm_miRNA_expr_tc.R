@@ -54,7 +54,7 @@ source('../utilities/plots.R')
 # Load data sets
 ################
 
-clusters <- 2
+clusters <- 3
 
 # select the files containing the data
 location <- "../data"
@@ -150,9 +150,9 @@ pam.miA66 <- run_pam(subset(counts.scaled.miA66, select = -c(miRNA), drop=FALSE)
 pam.miA66.noEGF <- run_pam(subset(counts.scaled.miA66.noEGF, select = -c(miRNA), drop=FALSE), clusters, "median_counts_A66noEGF_samples__pam", scale., centre)
 
 # add PAM labels
-counts.scaled.miWT.pam <- data.frame(counts.scaled.miWT, pam=factor(pam.miWT$clustering))
-counts.scaled.miA66.pam <- data.frame(counts.scaled.miA66, pam=factor(pam.miA66$clustering))
-counts.scaled.miA66.noEGF.pam <- data.frame(counts.scaled.miA66.noEGF, pam=factor(pam.miA66.noEGF$clustering))
+counts.scaled.miWT.pam <- data.frame(counts.scaled.miWT, pam=factor(pam.miWT$clustering), check.names=FALSE)
+counts.scaled.miA66.pam <- data.frame(counts.scaled.miA66, pam=factor(pam.miA66$clustering), check.names=FALSE)
+counts.scaled.miA66.noEGF.pam <- data.frame(counts.scaled.miA66.noEGF, pam=factor(pam.miA66.noEGF$clustering), check.names=FALSE)
 
 # plot
 plot_expr_tc_w_pam(counts.scaled.miWT.pam, "miRNA_tc__miWT_pam_clust", "(WT)", line=TRUE)
