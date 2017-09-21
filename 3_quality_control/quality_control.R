@@ -34,8 +34,8 @@
 library(reshape2)
 library(ggplot2)
 
+source('../utilities/extract_ids_gt_k.R')
 source('../utilities/plots.R')
-
 
 
 ################
@@ -106,5 +106,5 @@ rm(list = ls())
 #############################################
 print('extract_ids_gt_k')
 source('extract_ids_gt_k.R')
-extract_ids_gt_k <- function(counts, k=400000)
+extract_ids_gt_k(counts, k=400000)
 rm(list = ls())

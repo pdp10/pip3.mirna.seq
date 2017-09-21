@@ -42,45 +42,10 @@ library(cluster) # pam
 library(grid)
 library(gridExtra)
 
+
+source('../utilities/clustering.R')
 source('../utilities/plots.R')
 
-
-
-# Run PAM clustering (Partition around medoids)
-run_pam <- function(df, k, name, scale., centre) {
-
-  pamx <- pam(df, k, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
-  # Write the calculated clustering. This is the table miRNAs (rows) vs ClusterLabels (cols).
-  write.csv(pamx$clustering, file=paste0(name,k,"_labels.csv"), quote=FALSE)
-
-  return (pamx)
-}
-
-
-run_pca <- function(df, name, scale., centre) {
-  
-  # COMPUTE PCA
-  pca <- prcomp(t(df), scale.=scale., center=centre)
-  # Write the calculated PCA `rotation` (PCA load). This is the table miRNAs (rows) vs PCAs (cols).
-  write.csv(pca$rotation, file=paste0(name, '_pca_rotation.csv'), quote=FALSE)
-  
-  # Plot the variance of PCA components
-  png(paste0(name,"_pca_variances",".png"), width=2000, height=1500, res=300)
-  plot(pca, type = "l", main='Variance of PCA components')
-  dev.off()
-  
-  return(pca)
-}
-
-
-filt_pca <- function(pca, component=1, threshold=0.05) {
-  pca.rot <- pca$rotation
-  # filter the table
-  pca.rot.filt <- pca.rot[ pca.rot[, component] < threshold | pca.rot[, component] > threshold, ]
-  
-  # return the list of filtered ids
-  return(rownames(pca.rot.filt))
-}
 
 
 
