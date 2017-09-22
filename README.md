@@ -13,35 +13,35 @@ Create the samples table for DESeq
 Run quality control (pca, cv, read density, read ecdf, matrix corr)
 
 #### 3_quality_control_w_deseq2:
-Run DESeq dispersions estimates, mean vs sd plot, PCA analyses per time point and strain
+Run DESeq2 dispersions estimates, mean vs sd plot, PCA analyses per time point and strain
 
 #### 4_deseq__strain:
-Run DESeq contrasting strain (WT,A66)
+Run DESeq2 contrasting strain (WT,A66)
 
 #### 4_deseq__time:
-Run DESeq contrasting time (0,15,40,90,180,300)
+Run DESeq2 contrasting time (0,15,40,90,180,300)
 
 #### 4_deseq__strain_vs_time_per_TimePoint__factor_TimeStrain
-Run DESeq contrasting the strain (WT,A66) for each time point. This uses a factor (0WT,15WT, 40WT, ..., 0A66, 15A66, 40A66, ..) as design formula. 
+Run DESeq2 contrasting the strain (WT,A66) for each time point. This uses a factor (0WT,15WT, 40WT, ..., 0A66, 15A66, 40A66, ..) as design formula. 
 
 #### 4_deseq__strain_vs_time_per_TimePoint_interaction_WaldTest:
-Run DESeq using strain + time + strain:time as design formula. The idea is to calculate the difference between A66 and WT along the time course.
+Run DESeq2 using strain + time + strain:time as design formula. The idea is to calculate the difference between A66 and WT along the time course.
 Protocol: http://www.bioconductor.org/help/workflows/rnaseqGene/
 Not sure our data can be used with this approach successfully. 
 
 #### 4_deseq__strain_vs_egf:
-Run DESeq contrasting the strain (WT,A66) for EGF condition (EGF, noEGF). This uses a factor (EGFWT,noEGFWT, EGFA66, noEGFA66) as design formula. 
+Run DESeq2 contrasting the strain (WT,A66) for EGF condition (EGF, noEGF). This uses a factor (EGFWT,noEGFWT, EGFA66, noEGFA66) as design formula. 
 
-#### 5_clustering:
-Run pam clustering. Test of several k values.
-
-#### 6_compare_deseq_signif_miRNA_over_time:
+#### 5_compare_deseq_signif_miRNA_over_time:
 Compare DESeq2-based significant miRNA between time points
 
-#### 6_compare_deseq_signif_miRNA_vs_pca_loading:
+#### 5_compare_deseq_signif_miRNA_vs_pca_loading:
 Compare DESeq2-based significant miRNA against PCA:PC2 loadings 
 greater than a certain threshold. Calculate Venn diagram, and run 
 PCA for the significant sets.
+
+#### 6_clustering:
+Run pam clustering with labels of significant miRNA from PCA:PC2 and DESeq2 (contrast: Strain or Time).
 
 #### 7_miRNA_timecourses:
 Generate time courses from the counts table. miRNA are plotted all together, all together with colour representing PAM clustering, or by 
