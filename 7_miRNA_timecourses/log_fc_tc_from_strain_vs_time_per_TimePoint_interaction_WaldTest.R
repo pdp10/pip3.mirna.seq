@@ -58,7 +58,7 @@ padj.strain.thres <- 0.01
 
 
 clusters <- 2
-location.pam <- "../5_clustering"
+location.pam <- "../6_clustering"
 filename.pam <- paste0("summarised_mirna_counts_after_mapping_filtered_scaled_pam", clusters, "_labels")
 suffix <-".csv"
 

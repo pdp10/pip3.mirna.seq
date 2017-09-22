@@ -78,22 +78,22 @@ rm(list = ls())
 setwd('../')
 
 #5
-print('5_clustering')
-setwd('5_clustering')
-source('clustering.R')
-rm(list = ls())
-setwd('../')
-
-#6
-print('6_compare_deseq_signif_miRNA_over_time')
-setwd('6_compare_deseq_signif_miRNA_over_time')
+print('5_compare_deseq_signif_miRNA_over_time')
+setwd('5_compare_deseq_signif_miRNA_over_time')
 source('compare_deseq_signif_miRNA_over_time.R')
 rm(list = ls())
 setwd('../')
 
-print('6_compare_deseq_signif_miRNA_vs_pca_loading')
-setwd('6_compare_deseq_signif_miRNA_vs_pca_loading')
+print('5_compare_deseq_signif_miRNA_vs_pca_loading')
+setwd('5_compare_deseq_signif_miRNA_vs_pca_loading')
 source('compare_deseq_signif_miRNA_vs_pca_loading.R')
+rm(list = ls())
+setwd('../')
+
+#6
+print('6_clustering')
+setwd('6_clustering')
+source('clustering.R')
 rm(list = ls())
 setwd('../')
 

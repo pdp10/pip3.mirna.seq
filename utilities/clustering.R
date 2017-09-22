@@ -27,7 +27,7 @@
 
 
 # Run PAM clustering (Partition around medoids)
-run_pam <- function(df, k, name, scale., centre) {
+run_pam <- function(df, k, name, scale.=FALSE, centre=FALSE) {
 
   pamx <- pam(df, k, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
   # Write the calculated clustering. This is the table miRNAs (rows) vs ClusterLabels (cols).
@@ -38,7 +38,7 @@ run_pam <- function(df, k, name, scale., centre) {
 
 
 # run pca
-run_pca <- function(df, name, scale., centre) {
+run_pca <- function(df, name, scale.=FALSE, centre=FALSE) {
   
   # COMPUTE PCA
   pca <- prcomp(t(df), scale.=scale., center=centre)
