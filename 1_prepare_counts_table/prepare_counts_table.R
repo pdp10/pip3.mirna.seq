@@ -43,13 +43,13 @@ suffix <-".csv"
 # Create a data table from a counts matrix
 counts_2_data_table <- function(m) {
   d <- as.data.frame(m)
-  d$mir <- rownames(d)
+  d$miRNA <- rownames(d)
   d <- melt(d)
   d <- as.data.table(d)
   d[, `:=`(strain, sapply(strsplit(as.character(d[, variable]), "_"), "[[", 1))]
   d[, `:=`(time, sapply(strsplit(as.character(d[, variable]), "_"), "[[", 2))]
   d[, `:=`(replicate, sapply(strsplit(as.character(d[, variable]), "_"), "[[", 3))]
-  d <- d[, list(mir, value, strain, time, replicate)]
+  d <- d[, list(miRNA, value, strain, time, replicate)]
   return(d)
 }
 
@@ -86,68 +86,138 @@ counts <- counts[maxExp>10,]
 
 
 
+##############################################################
+# Get the miRNA names after filtering and replace `-` with `_`
+##############################################################
+mirna <- gsub('-','_', rownames(counts))
+
+
+
+
+########################
+# Save the counts matrix
+########################
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.mirna <- cbind(miRNA = mirna, counts)
+
+# write the filtered data to file
+write.csv(counts.mirna, file=paste0(location, "/", filename, "_filtered", suffix), row.names=FALSE)
+
+
+
+
+
+#########################
+# Log the counts matrix
+#########################
+
+counts.log <- log1p(counts)
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.log.mirna <- cbind(miRNA = mirna, counts.log)
+# write the filtered data to file
+write.csv(counts.log.mirna, file=paste0(location, "/", filename, "_filtered_log", suffix), row.names=FALSE)
+
+
+
+
+
 #########################
 # Scale the counts matrix (clustering, pca, etc)
 #########################
 
 # scale counts to N(0,1)
 counts.scaled <- t(scale(t(counts), center=TRUE, scale=TRUE))
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.scaled.mirna <- cbind(miRNA = mirna, counts.scaled)
+# write the filtered data to file
+write.csv(counts.scaled.mirna, file=paste0(location, "/", filename, "_filtered_scaled", suffix), row.names=FALSE)
+
+
+
+
+
 
 
 #########################
-# Log the counts matrix
+# Log and scaled the counts matrix
 #########################
 
-counts.log <- log(counts+1)
+# scale counts to N(0,1)
+counts.log.scaled <- t(scale(t(counts.log), center=TRUE, scale=TRUE))
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.log.scaled.mirna <- cbind(miRNA = mirna, counts.log.scaled)
+# write the filtered data to file
+write.csv(counts.log.scaled.mirna, file=paste0(location, "/", filename, "_filtered_log_scaled", suffix), row.names=FALSE)
+
+
+
+
 
 
 #########################
-# Log the counts matrix
+# Counts data table
 #########################
 
 counts.data.table <- counts_2_data_table(counts)
-
-
-
-############
-# Save files
-############
-
-mirna <- gsub('-','_', rownames(counts))
-
-# COUNTS
-# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
-counts <- cbind(miRNA = mirna, counts)
-
-# write the filtered data to file
-write.csv(counts, file=paste0(location, "/", filename, "_filtered", suffix), row.names=FALSE)
-
-
-
-# COUNTS.SCALED
-# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
-counts.scaled <- cbind(miRNA = mirna, counts.scaled)
-
-# write the filtered data to file
-write.csv(counts.scaled, file=paste0(location, "/", filename, "_filtered_scaled", suffix), row.names=FALSE)
-
-
-
-# LOG COUNTS
-# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
-counts.log <- cbind(miRNA = mirna, counts.log)
-
-# write the filtered data to file
-write.csv(counts.log, file=paste0(location, "/", filename, "_filtered_log", suffix), row.names=FALSE)
-
-
-
-
-
-# COUNTS DATA TABLE
-# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
-counts.log <- cbind(miRNA = mirna, counts.log)
-
 # write the filtered data to file
 write.csv(counts.data.table, file=paste0(location, "/", filename, "_filtered_data_table", suffix), row.names=FALSE)
+
+
+
+
+
+
+################################
+# Scale the median counts matrix
+################################
+# Because this is gene expression, one has to take the geometric mean, 
+# which in the case of a lognormal law is equal to the median. 
+# Then you can do all the transformations you want.
+
+
+### 1) FIRST, WE CALCULATE THE MEDIAN
+
+# retrieve the experiment groups (without repeat number). We only need to drop the last two characters from 
+# the name of each column. 
+groups <- gsub('.{2}$', '', colnames(counts))
+
+# remove duplicates
+groups <- groups[!duplicated(groups)]
+
+# calculate the median for each group of repeats.
+counts.median <- matrix(0, ncol=length(groups), nrow = nrow(counts))
+
+# extract the columns of replicates for each group and calculate the median by row. 
+# This new column will form a new data set with groups as column names.
+for(i in seq(1:length(groups))) {
+  # extract the columns of replicates
+  counts.g <- counts[, grepl(groups[i], colnames(counts))]
+  # calculate the median per row
+  counts.g.median <- apply(counts.g, 1, median)
+  # add this column to the median data frame
+  counts.median[, i] <- counts.g.median
+}
+
+counts.median <- data.frame(counts.median)
+rownames(counts.median) <- rownames(counts)
+colnames(counts.median) <- groups
+
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.median.mirna <- cbind(miRNA = mirna, counts.median)
+# write the filtered data to file
+write.csv(counts.median.mirna, file=paste0(location, "/", filename, "_filtered_median", suffix), row.names=FALSE)
+
+
+
+### 2) SECOND, WE SCALE
+# scale counts.median to N(0,1)
+counts.median.scaled <- t(scale(t(counts.median), center=TRUE, scale=TRUE))
+
+
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.median.scaled.mirna <- cbind(miRNA = mirna, counts.median.scaled)
+# write the filtered data to file
+write.csv(counts.median.scaled.mirna, file=paste0(location, "/", filename, "_filtered_median_scaled", suffix), row.names=FALSE)
+
+
 

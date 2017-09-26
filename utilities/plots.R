@@ -29,6 +29,10 @@ library(ggplot2)
 library(data.table)
 
 
+#source("https://bioconductor.org/biocLite.R")
+#biocLite("made4")
+library(made4)
+
 
 
 
@@ -159,6 +163,39 @@ plotPrettyPCA2Var <- function(x, intgroup=c("condition1", "condition2"), ntop=50
 
 
 
+##########
+# HEATPLOT
+##########
+
+# use these functions for clustering like heatplot.
+dist.pear <- function(x) as.dist(1-cor(t(x)))
+hclust.ave <- function(x) hclust(x, method="ward")
+
+# plot the counts matrix using heatmap.2
+plot_counts_matrix_heatmap <- function(df, filename="heatmap.png", palette=redgreen(50), dendrogram="both", scale="none", trace="none", labRow=FALSE, ylab='miRNA', xlab='Samples') {
+  png(file=filename, width=8, height=8, units="in", bg="white", res=300)
+  heatmap.2(as.matrix(df), col=palette,
+            dendrogram=dendrogram, scale=scale, trace=trace,
+            distfun=dist.pear, hclustfun=hclust.ave,
+            margins = c(9, 3),
+            labRow = labRow, ylab=ylab, xlab=xlab)
+  dev.off()
+}
+
+
+# plot the counts matrix using heatplot
+plot_counts_matrix_heatplot <- function(df, filename="heatplot.png", dendrogram="both", scale="row", method="ward", labRow=FALSE, ylab='miRNA', xlab='Samples') {
+  png(file=filename, width=8, height=8, units="in", bg="white", res=300)  
+  heatplot(df, 
+           dend=dendrogram, scale=scale, 
+           cols.default=FALSE, lowcol="blue", highcol="yellow", 
+           method=method,
+           margins = c(9, 3),
+           keysize=1, #key.par = list(cex=0.5)
+           labRow = labRow, ylab=ylab, xlab=xlab)
+  dev.off()
+}
+
 
 
 
@@ -215,9 +252,9 @@ plot_read_density <- function(d) {
     theme_basic() + 
     theme(legend.key.size = unit(0.4, "cm")) +
     scale_x_log10()
-  ggsave("miRNA_read_density.png", width=6, height=4, dpi=300)
+  ggsave("miRNA_read_density_per_sample.png", width=6, height=4, dpi=300)
   p <- p + facet_grid(strain ~ time)
-  ggsave("miRNA_read_density_facet.png", width=6, height=4, dpi=300)    
+  ggsave("miRNA_read_density_per_sample_facet.png", width=6, height=4, dpi=300)    
 }
 
 plot_read_ecdf <- function(d) {
@@ -227,13 +264,16 @@ plot_read_ecdf <- function(d) {
     theme_basic() + 
     theme(legend.key.size = unit(0.4, "cm")) +
     scale_x_log10() 
-  ggsave("miRNA_read_ecdf.png", width=6, height=4, dpi=300)
+  ggsave("miRNA_read_ecdf_per_sample.png", width=6, height=4, dpi=300)
   p <- p + facet_grid(strain ~ time)
-  ggsave("miRNA_read_ecdf_facet.png", width=6, height=4, dpi=300)  
+  ggsave("miRNA_read_ecdf_facet_per_sample.png", width=6, height=4, dpi=300)  
 }
 
-
-
+plot_counts_density <- function(df, filename) {
+  png(file=filename, width=8, height=8, units="in", bg="white", res=300)
+  plot(density(as.matrix(df)))
+  dev.off()
+}
 
 
 ###############

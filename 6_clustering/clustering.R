@@ -147,7 +147,7 @@ df.unified.time <- data.frame(counts.scaled, miRNA=rownames(counts.scaled), df.p
 # CLUSTERING
 #############
 
-clusters <- 2
+clusters <- 3
 scale.=FALSE
 
 # PC2 and DESeq:Strain

@@ -58,59 +58,28 @@ clusters <- 3
 
 # select the files containing the data
 location <- "../data"
-filename <- "summarised_mirna_counts_after_mapping_filtered_scaled"
-filename.data.table <- "summarised_mirna_counts_after_mapping_filtered_data_table"
+filename.scaled <- "summarised_mirna_counts_after_mapping_filtered_scaled"
+filename.median.scaled <- "summarised_mirna_counts_after_mapping_filtered_median_scaled"
+#filename.data.table <- "summarised_mirna_counts_after_mapping_filtered_data_table"
 suffix <-".csv"
 
-# load counts
-counts.scaled <- read.table(paste0(location,"/",filename,suffix), sep=",",fill=T,header=T,row.names=1)
+# load scaled counts
+counts.scaled <- read.table(paste0(location,"/",filename.scaled,suffix), sep=",",fill=T,header=T,row.names=1)
 
-# load counts data table (this contains meta data)
-counts.data.table <- read.table(paste0(location,"/",filename.data.table,suffix), sep=",",fill=T,header=T)
-
-
-
-
-#############################
-# Prepare data frame to plot
-#############################
-
-# retrieve the experiment groups (without repeat number). We only need to drop the last two characters from 
-# the name of each column. 
-groups <- gsub('.{2}$', '', colnames(counts.scaled))
-
-# remove duplicates
-groups <- groups[!duplicated(groups)]
-
-
-# calculate the median for each group of repeats.
-counts.scaled.median <- matrix(0, ncol=length(groups), nrow = nrow(counts.scaled))
-
-# extract the columns of replicates for each group and calculate the median by row. This new column will form a new data set with groups as column names.
-for(i in seq(1:length(groups))) {
-  # extract the columns of replicates
-  counts.g <- counts.scaled[, grepl(groups[i], colnames(counts.scaled))]
-  # calculate the median per row
-  counts.g.median <- apply(counts.g, 1, median)
-  # add this column to the median data frame
-  counts.scaled.median[, i] <- counts.g.median
-}
-
-counts.scaled.median <- data.frame(counts.scaled.median)
-rownames(counts.scaled.median) <- rownames(counts.scaled)
-colnames(counts.scaled.median) <- groups
+# load median scaled counts
+counts.median.scaled <- read.table(paste0(location,"/",filename.median.scaled,suffix), sep=",",fill=T,header=T,row.names=1)
 
 
 
 
 ######################################################
-# Separate counts.scaled.median into three data frames
+# Separate counts.median.scaled into three data frames
 ######################################################
 
 # Separate miWT, miA66, miA66_noEGF. We also add miRNA names as a new column (we need this for melting)
-counts.scaled.miWT <- data.frame(miRNA=rownames(counts.scaled), counts.scaled.median[, grepl("miWT", colnames(counts.scaled.median)), drop=FALSE])
-counts.scaled.miA66 <- data.frame(miRNA=rownames(counts.scaled), counts.scaled.median[, grepl("miA66", colnames(counts.scaled.median)), drop=FALSE])
-counts.scaled.miA66.noEGF <- data.frame(miRNA=rownames(counts.scaled), counts.scaled.median[, grepl("noEGF", colnames(counts.scaled.median)), drop=FALSE])
+counts.scaled.miWT <- data.frame(miRNA=rownames(counts.scaled), counts.median.scaled[, grepl("miWT", colnames(counts.median.scaled)), drop=FALSE])
+counts.scaled.miA66 <- data.frame(miRNA=rownames(counts.scaled), counts.median.scaled[, grepl("miA66", colnames(counts.median.scaled)), drop=FALSE])
+counts.scaled.miA66.noEGF <- data.frame(miRNA=rownames(counts.scaled), counts.median.scaled[, grepl("noEGF", colnames(counts.median.scaled)), drop=FALSE])
 
 # remove column `miA66_noEGF`` from miA66 data frame as this is treated separately.
 counts.scaled.miA66 <- subset(counts.scaled.miA66, select = -miA66_noEGF)
