@@ -34,6 +34,7 @@ source('../utilities/clustering.R')
 ################
 
 suffix <-".csv"
+clusters <- 3
 
 ### Load data sets
 
