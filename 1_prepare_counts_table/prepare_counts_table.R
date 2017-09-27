@@ -207,17 +207,31 @@ counts.median.mirna <- cbind(miRNA = mirna, counts.median)
 # write the filtered data to file
 write.csv(counts.median.mirna, file=paste0(location, "/", filename, "_filtered_median", suffix), row.names=FALSE)
 
+# also compute the log of counts.median
+counts.median.log <- log1p(counts.median)
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.median.log.mirna <- cbind(miRNA = mirna, counts.median.log)
+# write the filtered data to file
+write.csv(counts.median.log.mirna, file=paste0(location, "/", filename, "_filtered_median_log", suffix), row.names=FALSE)
+
+
+
 
 
 ### 2) SECOND, WE SCALE
+
 # scale counts.median to N(0,1)
 counts.median.scaled <- t(scale(t(counts.median), center=TRUE, scale=TRUE))
-
-
 # convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
 counts.median.scaled.mirna <- cbind(miRNA = mirna, counts.median.scaled)
 # write the filtered data to file
 write.csv(counts.median.scaled.mirna, file=paste0(location, "/", filename, "_filtered_median_scaled", suffix), row.names=FALSE)
 
 
+# scale counts.median.log to N(0,1)
+counts.median.log.scaled <- t(scale(t(counts.median.log), center=TRUE, scale=TRUE))
+# convert rownames to a new column. NOTE: '-' is replaced with '_' in miRNA names
+counts.median.log.scaled.mirna <- cbind(miRNA = mirna, counts.median.log.scaled)
+# write the filtered data to file
+write.csv(counts.median.log.scaled.mirna, file=paste0(location, "/", filename, "_filtered_median_log_scaled", suffix), row.names=FALSE)
 

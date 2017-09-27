@@ -33,9 +33,13 @@
 # You should get plenty of points, that should follow a classical square decay.
 # Most of the variation is at very low mean values because noise decreases as the sqrt(signal).
 # Two plots:
-# - scatterplot with colors representing Ctrl, EGF-treated and EGF+A66
+# - scatterplot with colors representing noEGF, EGF-treated and EGF+A66
 # - scatterplot with colors representing the times.
 
+
+
+source('../utilities/plots.R')
+library(ggplot2)
 
 
 
@@ -46,65 +50,59 @@ suffix <-".csv"
 
 
 # load counts
-counts <- read.table(paste(location,"/",filename,suffix,sep=""), sep=",",fill=TRUE,header=TRUE,row.names=1)
+counts <- read.table(paste0(location,"/",filename,suffix), sep=",",fill=TRUE,header=TRUE,row.names=1)
 
-
-# increase the left margin to avoid cropping the label
-par(mar=c(5.1, 5.1, 4.1, 2.1))
 
 
 ############################################
 # For each miRNA/condition, get the means and SD between replicates. Then plot X=mean, Y=CV
-# - scatterplot with colors representing Ctrl, EGF-treated and EGF+A66
+# - scatterplot with colors representing noEGF, EGF WT and EGF A66
 ############################################
 
 # separate groups
-# CTRL
-counts.ctrl <- counts[, grep('noEGF', colnames(counts))]
-counts.ctrl <- unique(counts.ctrl)
-counts.ctrl.mean <- apply(counts.ctrl, 1, mean)
-counts.ctrl.sd <- apply(counts.ctrl, 1, sd)
-counts.ctrl.cv <- counts.ctrl.sd/counts.ctrl.mean
-# EGF-trtm
-counts.egf.trtm <- counts[, grep('miWT', colnames(counts))]
-counts.egf.trtm.mean <- apply(counts.egf.trtm, 1, mean)
-counts.egf.trtm.sd <- apply(counts.egf.trtm, 1, sd)
-counts.egf.trtm.cv <- counts.egf.trtm.sd/counts.egf.trtm.mean
+# noEGF
+counts.noEGF <- counts[, grep('noEGF', colnames(counts))]
+counts.noEGF <- unique(counts.noEGF)
+counts.noEGF.mean <- apply(counts.noEGF, 1, mean)
+counts.noEGF.sd <- apply(counts.noEGF, 1, sd)
+counts.noEGF.cv <- counts.noEGF.sd/counts.noEGF.mean
+# EGF-wt
+counts.egf.wt <- counts[, grep('miWT', colnames(counts))]
+counts.egf.wt.mean <- apply(counts.egf.wt, 1, mean)
+counts.egf.wt.sd <- apply(counts.egf.wt, 1, sd)
+counts.egf.wt.cv <- counts.egf.wt.sd/counts.egf.wt.mean
 # EGF-a66
 counts.egf.a66 <- counts[, grep("miA66_[[:digit:]]", colnames(counts))]
 counts.egf.a66.mean <- apply(counts.egf.a66, 1, mean)
 counts.egf.a66.sd <- apply(counts.egf.a66, 1, sd)
 counts.egf.a66.cv <- counts.egf.a66.sd/counts.egf.a66.mean
 
-symbols=20
-
 # compute log as we plot log(mean)
-counts.ctrl.mean.log <- log(counts.ctrl.mean)
-counts.egf.trtm.mean.log <- log(counts.egf.trtm.mean)
-counts.egf.a66.mean.log <- log(counts.egf.a66.mean)
+counts.noEGF.mean.log <- log1p(counts.noEGF.mean)
+counts.egf.wt.mean.log <- log1p(counts.egf.wt.mean)
+counts.egf.a66.mean.log <- log1p(counts.egf.a66.mean)
 
 
-plot(x=counts.egf.trtm.mean.log, y=counts.egf.trtm.cv, 
-     xlim=c(0, max(counts.ctrl.mean.log, counts.egf.trtm.mean.log, counts.egf.a66.mean.log, na.rm=TRUE)),
-     ylim=c(0, max(counts.ctrl.cv, counts.egf.trtm.cv, counts.egf.a66.cv, na.rm=TRUE)),     
-     pch=symbols,col='green',
-     cex=1.5,cex.lab=1.5,cex.axis=1.5,
-     main="CV samples by treatment type",xlab=sprintf("log(mean)"),ylab=sprintf("CV"))
+# Create a data frame containing what we need.
+df.samples.by.trmt <- data.frame(mean=c(counts.noEGF.mean.log, 
+                                        counts.egf.wt.mean.log, 
+                                        counts.egf.a66.mean.log), 
+                                 cv=c(counts.noEGF.cv, 
+                                      counts.egf.wt.cv, 
+                                      counts.egf.a66.cv),
+                                 treatment=factor(c(rep('no EGF', length(counts.noEGF.mean.log)), 
+                                                    rep('EGF WT', length(counts.egf.wt.mean.log)), 
+                                                    rep('EGF A66', length(counts.egf.a66.mean.log)))))
 
-points(x=counts.egf.a66.mean.log, y=counts.egf.a66.cv,
-     pch=symbols,col='magenta',
-     cex=1.5,cex.lab=1.5,cex.axis=1.5)
-
-points(x=counts.ctrl.mean.log, y=counts.ctrl.cv,
-     pch=symbols,col='blue',
-     cex=1.5,cex.lab=1.5,cex.axis=1.5)
-
-legend(x="topright", legend = c('ctrl','egf a66','egf trtm'), col=c("blue","magenta","green"), pch=symbols)
-
-dev.copy(png, paste("CV_",filename,"_samples_by_trtm_type",".png",sep=""))
-dev.off()
-
-
+# Plot
+g <- ggplot(data=df.samples.by.trmt, aes(x=mean, y=cv, color=treatment)) +
+     geom_point(size=0.8) +
+     ggtitle('CV samples by treatment type') + xlab('log(mean)') + ylab('cv') +
+     theme_basic() + 
+     theme(axis.text=element_text(size=12),
+           axis.title.x=element_text(size=14),
+           axis.title.y=element_text(size=14))
+ggsave(paste0("CV_",filename,"_samples_by_strain_type",".png"), width=5, height=4, dpi=300)
 
 
 
@@ -150,8 +148,54 @@ counts.300.sd <- apply(counts.300, 1, sd)
 counts.300.cv <- counts.300.sd/counts.300.mean
 
 
+# compute log as we plot log(mean)
+counts.0.mean.log <- log1p(counts.0.mean)
+counts.15.mean.log <- log1p(counts.15.mean)
+counts.40.mean.log <- log1p(counts.40.mean)
+counts.90.mean.log <- log1p(counts.90.mean)
+counts.180.mean.log <- log1p(counts.180.mean)
+counts.300.mean.log <- log1p(counts.300.mean)
 
+
+# Create a data frame containing what we need.
+df.samples.by.tc <- data.frame(mean=c(counts.0.mean.log, 
+                                      counts.15.mean.log,
+                                      counts.40.mean.log, 
+                                      counts.90.mean.log, 
+                                      counts.180.mean.log, 
+                                      counts.300.mean.log), 
+                                cv=c(counts.0.cv, 
+                                     counts.15.cv, 
+                                     counts.40.cv, 
+                                     counts.90.cv, 
+                                     counts.180.cv, 
+                                     counts.300.cv),
+                                time=factor(c(rep('0m', length(counts.0.mean.log)), 
+                                              rep('15m', length(counts.15.mean.log)), 
+                                              rep('40m', length(counts.40.mean.log)), 
+                                              rep('90m', length(counts.90.mean.log)), 
+                                              rep('180m', length(counts.180.mean.log)), 
+                                              rep('300m', length(counts.300.mean.log)))))
+
+# Plot
+g <- ggplot(data=df.samples.by.tc, aes(x=mean, y=cv, color=time)) +
+    geom_point(size=0.8) +
+    ggtitle('CV samples by time course') + xlab('log(mean)') + ylab('cv') +
+    theme_basic() + 
+    theme(axis.text=element_text(size=12),
+          axis.title.x=element_text(size=14),
+          axis.title.y=element_text(size=14))
+ggsave(paste0("CV_",filename,"_samples_by_time_course",".png"), width=5, height=4, dpi=300)
+
+
+
+
+
+
+##############################################
 # Extract miRNA with log(mean)>=5 and CV>=0.5
+##############################################
+
 counts.tc <- counts[, grep('_[[:digit:]]{1,3}_', colnames(counts))]
 counts.tc.mean <- apply(counts.tc, 1, mean)
 counts.tc.sd <- apply(counts.tc, 1, sd)
@@ -164,43 +208,6 @@ write.csv(miRNA.highMean.highCV, file=paste(filename,"_miRNA_highMean_highCV.csv
 
 
 
-
-counts.0.mean.log <- log(counts.0.mean)
-counts.15.mean.log <- log(counts.15.mean)
-counts.40.mean.log <- log(counts.40.mean)
-counts.90.mean.log <- log(counts.90.mean)
-counts.180.mean.log <- log(counts.180.mean)
-counts.300.mean.log <- log(counts.300.mean)
-
-symbols=20
-
-plot(x=counts.0.mean.log, y=counts.0.cv, 
-     xlim=c(0, max(counts.0.mean.log, counts.15.mean.log, counts.40.mean.log, counts.90.mean.log, counts.180.mean.log, counts.300.mean.log, na.rm=TRUE)),
-     ylim=c(0, max(counts.0.cv, counts.15.cv, counts.40.cv, counts.90.cv, counts.180.cv, counts.300.cv, na.rm=TRUE)),     
-     pch=symbols,col='blue',
-     cex=1.5,cex.lab=1.5,cex.axis=1.5,
-     main="CV samples by time point",xlab=sprintf("log(mean)"),ylab=sprintf("CV"))
-
-points(x=counts.15.mean.log, y=counts.15.cv,
-       pch=symbols,col='magenta',
-       cex=1.5,cex.lab=1.5,cex.axis=1.5)
-points(x=counts.40.mean.log, y=counts.40.cv,
-       pch=symbols,col='green',
-       cex=1.5,cex.lab=1.5,cex.axis=1.5)
-points(x=counts.90.mean.log, y=counts.90.cv,
-       pch=symbols,col='orange',
-       cex=1.5,cex.lab=1.5,cex.axis=1.5)
-points(x=counts.180.mean.log, y=counts.180.cv,
-       pch=symbols,col='cyan',
-       cex=1.5,cex.lab=1.5,cex.axis=1.5)
-points(x=counts.300.mean.log, y=counts.300.cv,
-       pch=symbols,col='brown',
-       cex=1.5,cex.lab=1.5,cex.axis=1.5)
-
-legend(x="topright", legend = c('0m','15m','40m','90m','180m','300m'), col=c("blue","magenta","green", "orange", "cyan", "brown"), pch=symbols)
-
-dev.copy(png, paste("CV_",filename,"_samples_by_time_course",".png",sep=""))
-dev.off()
 
 
 # Mark and label the points of the plot manually
