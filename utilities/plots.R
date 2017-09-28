@@ -276,6 +276,8 @@ plot_counts_density <- function(df, filename) {
 }
 
 
+
+
 ###############
 # Volcano plots
 ###############
@@ -306,6 +308,94 @@ volcano_plot <- function(deseq2.res, thres.padj = 0.05, thres.lfc = 0.5, title="
   return(df[signif.genes,])
 }
 
+
+
+
+
+############
+# Clustering
+############
+
+# Run PAM clustering (colour is cluster)
+plot_clustering <- function(df.pca, df.full, k, filename, labels=FALSE, labels.col="miRNA", scale.=FALSE) {
+  
+  # Partition around medoids
+  pamx <- pam(df.pca, k, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
+  
+  # Write the calculated clustering. This is the table miRNAs (rows) vs ClusterLabels (cols).
+  write.csv(pamx$clustering, file=paste0("pam_clustering_labels.csv"), quote=FALSE)
+  
+  # Plot Clustering 
+  # PC1 vs PC2
+  # plot without labels
+  c1c2.pam <- autoplot(pamx, data=df.full, x=1, y=2, scale=scale.) +
+    ggtitle('PAM clustering of miRNAs') +
+    #coord_fixed(ratio=0.5) +
+    theme_basic()
+  
+  # PC2 vs PC3
+  # plot without labels
+  c2c3.pam <- autoplot(pamx, data=df.full, x=2, y=3, scale=scale.) +
+    ggtitle('PAM clustering of miRNAs') +
+    #coord_fixed(ratio=0.5) +
+    theme_basic()
+  
+  if(labels) {
+    c1c2.pam <- c1c2.pam +
+      geom_text(aes(label=ifelse( abs(PC2) > pca_thres & padj < deseq_thres, as.character(miRNA),'')),hjust=0,vjust=1, color="black", size=1.5)
+    c2c3.pam <- c2c3.pam +
+      geom_text(aes(label=ifelse( abs(PC2) > pca_thres & padj < deseq_thres, as.character(miRNA),'')),hjust=0,vjust=1, color="black", size=1.5)
+    
+    # write this list of genes:
+    signif.mir <- ifelse( abs(df.full$PC2) > df.full$pca_thres & df.full$padj < df.full$deseq_thres, as.character(df.full$miRNA),NA)
+    signif.mir <- signif.mir[!is.na(signif.mir)]
+    write.csv(signif.mir, file=paste0(filename, "_miRNA_labels.csv"), quote=FALSE, row.names=FALSE)
+    
+    ## COMBINE plots
+    c1c2c3.pam.combined <- arrangeGrob(c1c2.pam, c2c3.pam, ncol=2)
+    ggsave(paste0(filename, "_plot_w_labels.png"), plot=c1c2c3.pam.combined, width=8, height=3.5, dpi=300)
+  } else {
+    ## COMBINED plots
+    c1c2c3.pam.combined <- arrangeGrob(c1c2.pam, c2c3.pam, ncol=2)
+    ggsave(paste0(filename, "_plot.png"), plot=c1c2c3.pam.combined, width=8, height=3.5, dpi=300)
+  }  
+}
+
+
+
+
+
+###############
+# Venn Diagrams
+###############
+
+plot_venn_diagram <- function(data, filename, category.names, colours) {
+  # suppress the log file venn.diagram generates
+  futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+  # Now we plot the Venn diagram
+  venn.diagram(
+    x = data,
+    category.names = category.names,
+    filename = paste0(filename, ".png"),
+    output = FALSE,
+    imagetype="png",
+    height = 1000, 
+    width = 1000, 
+    resolution = 300,
+    compression = "lzw",
+    lwd = 1,
+    lty = 'blank',
+    fill = colours,
+    margin=c(0.05,0.05),
+    cex = 1,
+    fontfamily = "sans",
+    cat.cex = 0.6,
+    cat.default.pos = "outer",
+    #cat.pos = c(-15, 12),
+    #cat.dist = c(0.050, 0.055),
+    cat.fontfamily = "sans"
+  )
+}
 
 
 

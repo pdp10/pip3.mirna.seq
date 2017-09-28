@@ -84,12 +84,6 @@ source('compare_deseq_signif_miRNA_over_time.R')
 rm(list = ls())
 setwd('../')
 
-print('5_compare_deseq_signif_miRNA_vs_pca_loading')
-setwd('5_compare_deseq_signif_miRNA_vs_pca_loading')
-source('compare_deseq_signif_miRNA_vs_pca_loading.R')
-rm(list = ls())
-setwd('../')
-
 #6
 print('6_clustering')
 setwd('6_clustering')
