@@ -45,6 +45,8 @@ source('../utilities/plots.R')
 # Load data sets
 ################
 
+clusters <- 3
+scale. <- FALSE
 suffix <-".csv"
 
 # Counts Matrix
@@ -75,6 +77,7 @@ df.deseq.time <- read.table(paste0(location.deseq.time, "/", filename.deseq.time
 
 
 
+
 ###########
 # Filtering
 ###########
@@ -96,18 +99,24 @@ df.pca.filt <- df.pca[complete.cases(df.pca), ]
 df.pca.filt <- df.pca[df.pca$PC2 < -pca.thres.val | df.pca$PC2 > pca.thres.val,]
 # extract names
 df.pca.filt.miRNA <- rownames(df.pca.filt)
+# Write list of miRNAs
+write.csv(df.pca.filt, file=paste0("miRNA__filtered_pca_pc2__loadings_gt_", gsub('\\.','', pca.thres.val), suffix), row.names=T, quote=FALSE)
 
 # Create a DESeq2:strain results data frame of significant miRNA (padj, lfc)
 df.deseq.strain.filt <- df.deseq.strain[complete.cases(df.deseq.strain), ]
 df.deseq.strain.filt <- df.deseq.strain.filt[df.deseq.strain.filt$log2FoldChange < -deseq.strain.lfc.thres.val | df.deseq.strain.filt$log2FoldChange > deseq.strain.lfc.thres.val,]
 df.deseq.strain.filt <- df.deseq.strain.filt[df.deseq.strain.filt$padj < deseq.strain.padj.thres.val,]
 df.deseq.strain.filt.miRNA <- rownames(df.deseq.strain.filt)
+write.csv(df.deseq.strain.filt, file=paste0("miRNA__filtered_deseq_strain__padj_", gsub('\\.','', deseq.strain.padj.thres.val), '_lfc_', gsub('\\.','', deseq.strain.lfc.thres.val), suffix), row.names=T, quote=FALSE)
 
 # Create a DESeq2:time results data frame of significant miRNA (padj, lfc)
 df.deseq.time.filt <- df.deseq.time[complete.cases(df.deseq.time), ]
 df.deseq.time.filt <- df.deseq.time.filt[df.deseq.time.filt$log2FoldChange < -deseq.time.lfc.thres.val | df.deseq.time.filt$log2FoldChange > deseq.time.lfc.thres.val,]
 df.deseq.time.filt <- df.deseq.time.filt[df.deseq.time.filt$padj < deseq.time.padj.thres.val,]
 df.deseq.time.filt.miRNA <- rownames(df.deseq.time.filt)
+write.csv(df.deseq.time.filt, file=paste0("miRNA__filtered_deseq_time__padj_", gsub('\\.','', deseq.time.padj.thres.val), '_lfc_', gsub('\\.','', deseq.time.lfc.thres.val), suffix), row.names=T, quote=FALSE)
+
+
 
 
 
@@ -115,31 +124,36 @@ df.deseq.time.filt.miRNA <- rownames(df.deseq.time.filt)
 
 
 #############
-# CLUSTERING    --- TO WORK ON THIS! 
+# CLUSTERING  
 #############
 
-clusters <- 3
-scale.=FALSE
+# Create vectors of labels when the miRNA is significative ('' otherwise). 
 
-# this is a % (the higher, the more we filter)
-pca.thres <- rep(pca.thres.val, nrow(counts.scaled))
-# this is padj (the lower, the more we filter)
-deseq.strain.thres <- rep(deseq.strain.padj.thres.val, nrow(counts.scaled))
-deseq.time.thres <- rep(deseq.time.padj.thres.val, nrow(counts.scaled))
+# vector of mirna with filtered PC2
+mirna.pca.pc2.filt.labels <- ifelse(rownames(counts.scaled) %in% df.pca.filt.miRNA, rownames(counts.scaled), '')
+# vector of mirna with significative DESeq2:Strain
+mirna.deseq.strain.filt.labels <- ifelse(rownames(counts.scaled) %in% df.deseq.strain.filt.miRNA, rownames(counts.scaled), '')
+# vector of mirna with significative DESeq2:Time
+mirna.deseq.time.filt.labels <- ifelse(rownames(counts.scaled) %in% df.deseq.time.filt.miRNA, rownames(counts.scaled), '')
+
+# vector of mirna with filtered PC2 and significative DESeq2:Strain
+mirna.pca.pc2.deseq.strain.filt.labels <- ifelse(mirna.deseq.strain.filt.labels %in% mirna.pca.pc2.filt.labels, mirna.deseq.strain.filt.labels, '')
+# vector of mirna with filtered PC2 and significative DESeq2:Time
+mirna.pca.pc2.deseq.time.filt.labels <- ifelse(mirna.deseq.time.filt.labels %in% mirna.pca.pc2.filt.labels, mirna.deseq.time.filt.labels, '')
+
 
 # Unify the data sets (is there a better way to pass the thresholds without adding a new column?? aes, aes_string seem not to work..)
-df.unified.strain <- data.frame(counts.scaled, miRNA=rownames(counts.scaled), df.pca, df.deseq.strain, pca_thres=pca.thres, deseq_thres=deseq.strain.thres)
-df.unified.time <- data.frame(counts.scaled, miRNA=rownames(counts.scaled), df.pca, df.deseq.time, pca_thres=pca.thres, deseq_thres=deseq.time.thres)
+df.unified.strain <- data.frame(counts.scaled, label=mirna.pca.pc2.deseq.strain.filt.labels)
+df.unified.time <- data.frame(counts.scaled, label=mirna.pca.pc2.deseq.time.filt.labels)
 
 # PLOT
 # PC2 and DESeq:Strain
-plot_clustering(counts.scaled, df.unified.strain, clusters, paste0('pam_clustering_w_deseq_strain_pca_pc2'), labels=FALSE, labels.col="miRNA", scale.)
-plot_clustering(counts.scaled, df.unified.strain, clusters, paste0('pam_clustering_w_deseq_strain_pca_pc2'), labels=TRUE, labels.col="miRNA", scale.)
+plot_clustering(df.pam=counts.scaled, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_pc2'), labels=FALSE, scale.)
+plot_clustering(df.pam=counts.scaled, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_pc2'), labels=TRUE, scale.)
 
 # PC2 and DESeq:Time
-plot_clustering(counts.scaled, df.unified.time, clusters, paste0('pam_clustering_w_deseq_time_pca_pc2'), labels=FALSE, labels.col="miRNA", scale.)
-plot_clustering(counts.scaled, df.unified.time, clusters, paste0('pam_clustering_w_deseq_time_pca_pc2'), labels=TRUE, labels.col="miRNA", scale.)
-
+plot_clustering(df.pam=counts.scaled, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_pc2'), labels=FALSE, scale.)
+plot_clustering(df.pam=counts.scaled, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_pc2'), labels=TRUE, scale.)
 
 
 
@@ -185,15 +199,6 @@ write.csv(df.pc2.deseq.strain.time.miRNA, file=paste0("venn_diagram_intersect__f
 
 
 
-######################
-# Write list of miRNAs
-######################
-
-write.csv(df.pca.filt, file=paste0("miRNA__filtered_pca_pc2__loadings_gt_", gsub('\\.','', pca.thres.val), suffix), row.names=T, quote=FALSE)
-write.csv(df.deseq.strain.filt, file=paste0("miRNA__filtered_deseq_strain__padj_", gsub('\\.','', deseq.strain.padj.thres.val), '_lfc_', gsub('\\.','', deseq.strain.lfc.thres.val), suffix), row.names=T, quote=FALSE)
-write.csv(df.deseq.time.filt, file=paste0("miRNA__filtered_deseq_time__padj_", gsub('\\.','', deseq.time.padj.thres.val), '_lfc_', gsub('\\.','', deseq.time.lfc.thres.val), suffix), row.names=T, quote=FALSE)
-
-
 
 
 
@@ -203,7 +208,6 @@ write.csv(df.deseq.time.filt, file=paste0("miRNA__filtered_deseq_time__padj_", g
 
 # The purpose is to see whether the data separation detected on PCA:PC2 using all miRNAs 
 # is still present within the group of significant miRNAs.
-
 
 # Create a counts table of significant miRNAs
 counts.scaled.deseq.strain.signif <- counts.scaled[rownames(counts.scaled) %in% df.deseq.strain.filt.miRNA,]
@@ -221,8 +225,6 @@ strain <- ifelse(grepl('WT', colnames(counts.scaled.deseq.strain.signif)), 'WT',
 counts.scaled.deseq.strain.signif.t.metadata <- cbind(counts.scaled.deseq.strain.signif.t.metadata, strain)
 
 
-
-
 # Run PCA
 pca <- prcomp(counts.scaled.deseq.strain.signif.t, center=TRUE, scale.=scale.)
 # This provide a list of components with the respective variance (used for plotting)
@@ -235,8 +237,6 @@ dev.off()
 
 # Write the calculated PCA `rotation` (PCA loadings). This is the table miRNAs (rows) vs PCAs (cols).
 write.csv(pca$rotation, file=paste0("pca_loadings_filt_deseq_strain_signif_mirna", suffix), quote=FALSE)
-
-
 
 
 # Plot PCA (colour is strain)

@@ -317,10 +317,10 @@ volcano_plot <- function(deseq2.res, thres.padj = 0.05, thres.lfc = 0.5, title="
 ############
 
 # Run PAM clustering (colour is cluster)
-plot_clustering <- function(df.pca, df.full, k, filename, labels=FALSE, labels.col="miRNA", scale.=FALSE) {
+plot_clustering <- function(df.pam, df.full, k, filename, labels=FALSE, scale.=FALSE) {
   
   # Partition around medoids
-  pamx <- pam(df.pca, k, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
+  pamx <- pam(df.pam, k, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
   
   # Write the calculated clustering. This is the table miRNAs (rows) vs ClusterLabels (cols).
   write.csv(pamx$clustering, file=paste0("pam_clustering_labels.csv"), quote=FALSE)
@@ -328,28 +328,23 @@ plot_clustering <- function(df.pca, df.full, k, filename, labels=FALSE, labels.c
   # Plot Clustering 
   # PC1 vs PC2
   # plot without labels
-  c1c2.pam <- autoplot(pamx, data=df.full, x=1, y=2, scale=scale.) +
+  c1c2.pam <- autoplot(pamx, data=df.full, x=1, y=2, center=TRUE, scale=scale.) +
     ggtitle('PAM clustering of miRNAs') +
     #coord_fixed(ratio=0.5) +
     theme_basic()
   
   # PC2 vs PC3
   # plot without labels
-  c2c3.pam <- autoplot(pamx, data=df.full, x=2, y=3, scale=scale.) +
+  c2c3.pam <- autoplot(pamx, data=df.full, x=2, y=3, center=TRUE, scale=scale.) +
     ggtitle('PAM clustering of miRNAs') +
     #coord_fixed(ratio=0.5) +
     theme_basic()
   
   if(labels) {
     c1c2.pam <- c1c2.pam +
-      geom_text(aes(label=ifelse( abs(PC2) > pca_thres & padj < deseq_thres, as.character(miRNA),'')),hjust=0,vjust=1, color="black", size=1.5)
+      geom_text(aes(label=label),hjust=0,vjust=1, color="black", size=2.5)
     c2c3.pam <- c2c3.pam +
-      geom_text(aes(label=ifelse( abs(PC2) > pca_thres & padj < deseq_thres, as.character(miRNA),'')),hjust=0,vjust=1, color="black", size=1.5)
-    
-    # write this list of genes:
-    signif.mir <- ifelse( abs(df.full$PC2) > df.full$pca_thres & df.full$padj < df.full$deseq_thres, as.character(df.full$miRNA),NA)
-    signif.mir <- signif.mir[!is.na(signif.mir)]
-    write.csv(signif.mir, file=paste0(filename, "_miRNA_labels.csv"), quote=FALSE, row.names=FALSE)
+      geom_text(aes(label=label),hjust=0,vjust=1, color="black", size=2.5)
     
     ## COMBINE plots
     c1c2c3.pam.combined <- arrangeGrob(c1c2.pam, c2c3.pam, ncol=2)
@@ -360,7 +355,6 @@ plot_clustering <- function(df.pca, df.full, k, filename, labels=FALSE, labels.c
     ggsave(paste0(filename, "_plot.png"), plot=c1c2c3.pam.combined, width=8, height=3.5, dpi=300)
   }  
 }
-
 
 
 
