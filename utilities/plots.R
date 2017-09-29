@@ -28,11 +28,14 @@ library(reshape2)
 library(ggplot2)
 library(data.table)
 
+library(VennDiagram)
 
 #source("https://bioconductor.org/biocLite.R")
 #biocLite("made4")
 library(made4)
 
+
+source('../utilities/deseq.R')
 
 
 
@@ -57,42 +60,38 @@ theme_basic <- function(){
 # time courses
 ##############
 
-# Plot time courses
-plot_expr_tc <- function(df, name, type, line=TRUE) {
-  # melt the data.table
-  df.melt <- melt(df, id=c('miRNA'))
-  
-  g <- ggplot(df.melt, aes(x=variable, y=value, group=miRNA)) + 
-    ggtitle(paste0('miRNA expression ', type)) +
-    xlab('Time [m]') + 
-    ylab('median standardised expression') +
-    theme_basic()
+
+# Plot miRNAs time courses with colour
+plot_expr_tc_wcolour <- function(df, filename, line=TRUE, gradient=TRUE, title='miRNA expression', xlab='time [m]', ylab='expression', colorlab='strain') {
+  g <- ggplot(data=df, aes(x=variable, y=value, group=miRNA, color=colour)) + 
+    theme_basic() + 
+    labs(title=title, x=xlab, y=ylab, color=colorlab)
+  if(gradient) {
+    g <- g + scale_colour_gradient2(low="red", mid="lightgrey", high="navyblue")
+  }
   if(line) {
     g <- g + geom_line()
   } else {
     g <- g + geom_point()
   }
-  ggsave(paste0(name, ".png"), width=4, height=4, dpi=300)
+  ggsave(filename, width=4, height=4, dpi=300)
 }
 
-# Plot time courses based on pam class
-plot_expr_tc_w_pam <- function(df, name, type, line=TRUE) {
-  # melt the data.table
-  df.melt <- melt(df, id=c('miRNA', 'pam'))
-  
-  # Plot miRNA using PAM clustering for colours
-  g <- ggplot(df.melt, aes(x=variable, y=value, group=miRNA, color=pam)) + 
-    ggtitle(paste0('miRNA expression ', type)) +
-    xlab('Time [m]') + 
-    ylab('median standardised expression') +
-    theme_basic()
+
+# Plot miRNAs time courses
+plot_expr_tc <- function(df, filename, line=TRUE, title='miRNA expression', xlab='time [m]', ylab='expression') {
+  g <- ggplot(data=df, aes(x=variable, y=value, group=miRNA)) + 
+    theme_basic() + 
+    labs(title=title, x=xlab, y=ylab)
   if(line) {
     g <- g + geom_line()
   } else {
     g <- g + geom_point()
   }
-  ggsave(paste0(name, ".png"), width=4, height=4, dpi=300)
+  ggsave(filename, width=4, height=4, dpi=300)
 }
+
+
 
 # Plot median time courses based on pam class
 plot_median_expr_tc_w_pam <- function(df, name, type, line=TRUE) {
@@ -118,6 +117,82 @@ plot_median_expr_tc_w_pam <- function(df, name, type, line=TRUE) {
   }
   ggsave(paste0(name, ".png"), width=4, height=4, dpi=300)
 }
+
+
+
+# plot DESeq2 Log2FoldChange time courses with Strain as a colour.
+plot_deseq_lfc_tc_wstrain <- function(deseq2.tc.files, deseq2.strain.file, deseq2.strain.signif.file, filename.out) {
+  
+  # Merge time course data sets
+  #############################
+  # Create a data frame of Deseq2:log2FoldChange time courses. 
+  df.tc <- deseq_lfc_time_course_df(deseq2.tc.files)
+  if(!('0' %in% colnames(df.tc))) {
+    df.tc <- data.frame('0'=rep(0, nrow(df.tc)), df.tc, check.names = FALSE)
+  }
+  
+  # Extract DESeq:strain for colour information
+  #############################################
+  # Load log2FoldChange for Strain
+  df.strain <- read.table(deseq2.strain.file, sep=",",fill=T,header=T,row.names=1)[,2]
+  # Extract the names of the significant miRNA when contrast:Strain. 
+  df.strain.signif.mirna <- rownames(read.table(deseq2.strain.signif.file, sep=",",fill=T,header=T,row.names=1))
+  
+  # Melt and plot data frames
+  ###########################
+  df <- df.tc
+  # add miRNA as new row
+  df$miRNA <- rownames(df)
+  # Add strain (colour)
+  df$colour <- df.strain
+  # Melt times so that we have 'miRNA', 'colour', 'variable' (time-cols), 'value' (time-vals)
+  df.melt <- melt(df, id=c('miRNA','colour'))
+  # Plot
+  plot_expr_tc_wcolour(df=df.melt, filename=paste0(filename.out, ".png"), 
+                       title='miRNA expression', xlab='time [m]', ylab='log2 fold change', colorlab='strain')
+  
+  # Due to the high number of miRNA, we also filter those having significant change in DESeq contrast `Strain`.
+  df.signif <- df[df.strain.signif.mirna,]
+  # Melt
+  df.melt.signif <- melt(df.signif, id=c('miRNA','colour'))
+  # Plot
+  plot_expr_tc_wcolour(df=df.melt.signif, filename=paste0(filename.out, "__signif", ".png"),
+                       title='miRNA expression', xlab='time [m]', ylab='log2 fold change', colorlab='strain')
+  
+}
+
+
+# plot DESeq2 Log2FoldChange time courses with PAM clustering labels as a colour.
+plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filename.out) {
+  
+  # Merge time course data sets
+  #############################
+  # Create a data frame of Deseq2:log2FoldChange time courses. 
+  df.tc <- deseq_lfc_time_course_df(deseq2.tc.files)
+  
+  # Load PAM cluster labels for colour information
+  #############################################
+  # Load strain information
+  df.pam <- read.table(pam.clust.file, sep=",",fill=T,header=T,row.names=1)
+  
+  # Melt and plot data frames
+  ###########################
+  df <- df.tc
+  # add miRNA as new row
+  df$miRNA <- rownames(df)
+  # Add PAM cluster (colour)
+  # pam is converted to factor so that it is not automatically interpreted as a continuous variable
+  df$colour <- factor(df.pam[,1])
+  # Melt times so that we have 'miRNA', 'pam', 'variable' (time-cols), 'value' (time-vals)
+  df.melt <- melt(df, id=c('miRNA','colour'))
+  
+  # Plot miRNA using PAM clustering for colours
+  plot_expr_tc_wcolour(df=df.melt, filename="miRNA_log_fc_tc__deseq_strain_time_factor__w_pam_clust.png", gradient=FALSE, 
+                       title='miRNA expression with PAM clustering', xlab='time [m]', ylab='log2 fold change', colorlab='pam')
+  
+}
+
+
 
 
 
@@ -355,7 +430,6 @@ plot_clustering <- function(df.pam, df.full, k, filename, labels=FALSE, scale.=F
     ggsave(paste0(filename, "_plot.png"), plot=c1c2c3.pam.combined, width=8, height=3.5, dpi=300)
   }  
 }
-
 
 
 

@@ -64,3 +64,19 @@ filt_pca <- function(pca, component=1, threshold=0.05) {
   return(rownames(pca.rot.filt))
 }
 
+
+
+# create data frame of the median of rows having the same the colour id (column) 
+# return a data table
+median_df_by_colour_id <- function(df, filename) {
+  # convert data.frame to data.table
+  dt <- data.table(df)  
+  # median every column by `colour` class (and for each time point)
+  dt.median <- dt[, lapply(.SD, median), by=colour]
+  # save the data.table
+  write.csv(dt.median, file=filename, row.names=F, quote=FALSE)
+  return(dt.median)
+}
+
+
+

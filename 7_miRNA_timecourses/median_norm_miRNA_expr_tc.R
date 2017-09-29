@@ -97,10 +97,20 @@ colnames(counts.scaled.miA66.noEGF) <- c('miRNA', '300')
 # Plot all miRNA time courses by WT, A66, and noEGF
 ###################################################
 
+# melt the data.table
+df.melt <- melt(counts.scaled.miWT, id=c('miRNA'))
 # plot
-plot_expr_tc(counts.scaled.miWT, "miRNA_tc__miWT", "(WT)", line=TRUE)
-plot_expr_tc(counts.scaled.miA66, "miRNA_tc__miA66", "(A66)", line=TRUE)
-plot_expr_tc(counts.scaled.miA66.noEGF, "miRNA_tc__miA66noEGF", "(A66 noEGF)", line=FALSE)
+plot_expr_tc(df.melt, filename="miRNA_tc__miWT.png", line=TRUE, title='miRNA expression (WT)', xlab='time [m]', ylab='median standardised expression')
+
+# melt the data.table
+df.melt <- melt(counts.scaled.miA66, id=c('miRNA'))
+# plot
+plot_expr_tc(df.melt, filename="miRNA_tc__miA66.png", line=TRUE, title='miRNA expression (A66)', xlab='time [m]', ylab='median standardised expression')
+
+# melt the data.table
+df.melt <- melt(counts.scaled.miA66.noEGF, id=c('miRNA'))
+# plot
+plot_expr_tc(df.melt, filename="miRNA_tc__miA66noEGF.png", line=FALSE, title='miRNA expression (A66 noEGF)', xlab='time [m]', ylab='median standardised expression')
 
 
 
@@ -119,14 +129,19 @@ pam.miA66 <- run_pam(subset(counts.scaled.miA66, select = -c(miRNA), drop=FALSE)
 pam.miA66.noEGF <- run_pam(subset(counts.scaled.miA66.noEGF, select = -c(miRNA), drop=FALSE), clusters, "median_counts_A66noEGF_samples__pam", scale., centre)
 
 # add PAM labels
-counts.scaled.miWT.pam <- data.frame(counts.scaled.miWT, pam=factor(pam.miWT$clustering), check.names=FALSE)
-counts.scaled.miA66.pam <- data.frame(counts.scaled.miA66, pam=factor(pam.miA66$clustering), check.names=FALSE)
-counts.scaled.miA66.noEGF.pam <- data.frame(counts.scaled.miA66.noEGF, pam=factor(pam.miA66.noEGF$clustering), check.names=FALSE)
+counts.scaled.miWT.pam <- data.frame(counts.scaled.miWT, colour=factor(pam.miWT$clustering), check.names=FALSE)
+counts.scaled.miA66.pam <- data.frame(counts.scaled.miA66, colour=factor(pam.miA66$clustering), check.names=FALSE)
+counts.scaled.miA66.noEGF.pam <- data.frame(counts.scaled.miA66.noEGF, colour=factor(pam.miA66.noEGF$clustering), check.names=FALSE)
 
-# plot
-plot_expr_tc_w_pam(counts.scaled.miWT.pam, "miRNA_tc__miWT_pam_clust", "(WT)", line=TRUE)
-plot_expr_tc_w_pam(counts.scaled.miA66.pam, "miRNA_tc__miA66_pam_clust", "(A66)", line=TRUE)
-plot_expr_tc_w_pam(counts.scaled.miA66.noEGF.pam, "miRNA_tc__miA66noEGF_pam_clust", "(A66 noEGF)", line=FALSE)
+# melt & plot
+df.melt <- melt(counts.scaled.miWT.pam, id=c('miRNA', 'colour'))
+plot_expr_tc_wcolour(df.melt, filename="miRNA_tc__miWT_pam_clust.png", line=TRUE, gradient=FALSE, title='miRNA expression (WT)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
+# melt & plot
+df.melt <- melt(counts.scaled.miA66.pam, id=c('miRNA', 'colour'))
+plot_expr_tc_wcolour(df.melt, filename="miRNA_tc__miA66_pam_clust.png", line=TRUE, gradient=FALSE, title='miRNA expression (A66)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
+# melt & plot
+df.melt <- melt(counts.scaled.miA66.noEGF.pam, id=c('miRNA', 'colour'))
+plot_expr_tc_wcolour(df.melt, filename="miRNA_tc__miA66noEGF_pam_clust.png", line=FALSE, gradient=FALSE, title='miRNA expression (A66 noEGF)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
 
 
 
@@ -135,9 +150,32 @@ plot_expr_tc_w_pam(counts.scaled.miA66.noEGF.pam, "miRNA_tc__miA66noEGF_pam_clus
 # Median of the miRNAs belonging to the same cluster class. This for miWT, miA66, and miA66.noEGF
 #####################################################################################################
 
+# calculate the median
+dt.median <- median_df_by_colour_id(subset(counts.scaled.miWT.pam, select = -c(miRNA), drop=FALSE), filename='miRNA_tc_miWT_pam_clust_median.csv')
+# we restore this column to make the plot work. We group by miRNA. Here is pointless really, but this avoids the creation of a new plot function
+dt.median$miRNA <- dt.median$colour
+# melt the data.table
+dt.median.melt <- melt(dt.median, id=c('miRNA', 'colour'))
 # plot
-plot_median_expr_tc_w_pam(subset(counts.scaled.miWT.pam, select = -c(miRNA), drop=FALSE), 'miRNA_tc_miWT_pam_clust_median', '(WT)', line=TRUE)
-plot_median_expr_tc_w_pam(subset(counts.scaled.miA66.pam, select = -c(miRNA), drop=FALSE), 'miRNA_tc_miA66_pam_clust_median', '(A66)', line=TRUE)
-plot_median_expr_tc_w_pam(subset(counts.scaled.miA66.noEGF.pam, select = -c(miRNA), drop=FALSE), 'miRNA_tc_miA66noEGF_pam_clust_median', '(A66 noEGF)', line=FALSE)
+plot_expr_tc_wcolour(dt.median.melt, filename='miRNA_tc_miWT_pam_clust_median.png', 
+                     line=TRUE, gradient=FALSE, title='miRNA expression (WT)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
+
+dt.median <- median_df_by_colour_id(subset(counts.scaled.miA66.pam, select = -c(miRNA), drop=FALSE), filename='miRNA_tc_miA66_pam_clust_median.csv')
+# we restore this column to make the plot work. We group by miRNA. Here is pointless really, but this avoids the creation of a new plot function
+dt.median$miRNA <- dt.median$colour
+# melt the data.table
+dt.median.melt <- melt(dt.median, id=c('miRNA', 'colour'))
+# plot
+plot_expr_tc_wcolour(dt.median.melt, filename='miRNA_tc_miA66_pam_clust_median.png', 
+                     line=TRUE, gradient=FALSE, title='miRNA expression (A66)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
+
+dt.median <- median_df_by_colour_id(subset(counts.scaled.miA66.noEGF.pam, select = -c(miRNA), drop=FALSE), filename='miRNA_tc_miA66noEGF_pam_clust_median.csv')
+# we restore this column to make the plot work. We group by miRNA. Here is pointless really, but this avoids the creation of a new plot function
+dt.median$miRNA <- dt.median$colour
+# melt the data.table
+dt.median.melt <- melt(dt.median, id=c('miRNA', 'colour'))
+# plot
+plot_expr_tc_wcolour(dt.median.melt, filename='miRNA_tc_miA66noEGF_pam_clust_median.png', 
+                     line=FALSE, gradient=FALSE, title='miRNA expression (A66noEGF)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
 
 

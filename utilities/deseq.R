@@ -26,12 +26,31 @@
 
 
 
-print('median_norm_miRNA_expr_tc')
-source('median_norm_miRNA_expr_tc.R')
-rm(list = ls())
 
-
-print('deseq2_tc_lfc')
-source('deseq2_tc_lfc.R')
-rm(list = ls())
-
+# Create a data frame of Deseq2:log2FoldChange time courses. 
+# `files` is a vector of Deseq2 results, each representing a time point. 
+deseq_lfc_time_course_df <- function(files) {
+  
+  # Load one DESeq data set in order to get the miRNA names.
+  miRNAs <- row.names(read.table(paste0(location.time,"/",filename.deseq.time, time[1], suffix), sep=",",fill=T,header=T,row.names=1))
+  
+  # Add log2FoldChange_time0
+  df.tc <- data.frame(t0=rep(0, length(miRNAs)))
+  # Add row names
+  rownames(df.tc) <- miRNAs
+  
+  # Add log2FoldChange for the available time points.
+  for(i in seq(1, length(time))) {
+    df.tmp <- read.table(paste0(location.time,"/",filename.deseq.time, time[i], suffix), sep=",",fill=T,header=T,row.names=1)[,2]
+    # Add log2FoldChange_timeX
+    df.tc <- cbind(df.tc, df.tmp)
+  }
+  
+  # Remove the first fake column t0.
+  df.tc <- subset(df.tc, select = -c(t0) )
+  
+  # Set column names (time points)
+  colnames(df.tc) <- c(paste0(time))
+  
+  return(df.tc)
+}
