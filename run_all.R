@@ -99,8 +99,8 @@ rm(list = ls())
 setwd('../')
 
 #8
-print('8_analysis_signif_mirna__venn_intersection')
-setwd('8_analysis_signif_mirna__venn_intersection')
-source('analysis_signif_mirna__venn_intersection.R')
+print('8_miRNA_timecourses__venn_intersection')
+setwd('8_miRNA_timecourses__venn_intersection')
+source('miRNA_timecourses__venn_intersection.R')
 rm(list = ls())
 setwd('../')
