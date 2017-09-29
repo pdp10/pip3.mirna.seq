@@ -169,6 +169,9 @@ plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filename.out
   #############################
   # Create a data frame of Deseq2:log2FoldChange time courses. 
   df.tc <- deseq_lfc_time_course_df(deseq2.tc.files)
+  if(!('0' %in% colnames(df.tc))) {
+    df.tc <- data.frame('0'=rep(0, nrow(df.tc)), df.tc, check.names = FALSE)
+  }
   
   # Load PAM cluster labels for colour information
   #############################################
@@ -187,8 +190,8 @@ plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filename.out
   df.melt <- melt(df, id=c('miRNA','colour'))
   
   # Plot miRNA using PAM clustering for colours
-  plot_expr_tc_wcolour(df=df.melt, filename="miRNA_log_fc_tc__deseq_strain_time_factor__w_pam_clust.png", gradient=FALSE, 
-                       title='miRNA expression with PAM clustering', xlab='time [m]', ylab='log2 fold change', colorlab='pam')
+  plot_expr_tc_wcolour(df=df.melt, filename=paste0(filename.out, ".png"), gradient=FALSE, 
+                       title='miRNA expression', xlab='time [m]', ylab='log2 fold change', colorlab='pam')
   
 }
 
