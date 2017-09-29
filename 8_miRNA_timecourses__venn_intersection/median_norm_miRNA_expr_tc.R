@@ -70,6 +70,29 @@ counts.scaled <- read.table(paste0(location,"/",filename.scaled,suffix), sep=","
 counts.median.scaled <- read.table(paste0(location,"/",filename.median.scaled,suffix), sep=",",fill=T,header=T,row.names=1)
 
 
+### Load significant miRNA calculated using DESeq2:strain (padj<=0.05, |lfc|>0.1) && PCA:PC2 (>0.05). These are 89 miRNA (see Venn diagram)
+# select the files containing the data
+location.venn.intersect <- "../6_clustering"
+filename.venn.intersect <- "venn_diagram_intersect__filt_pca_pc2_VS_signif_deseq_strain"
+# load the significant miRNA names 
+miRNA.venn.intersect <- rownames(read.table(paste0(location.venn.intersect,"/",filename.venn.intersect,suffix), sep=",",fill=T,header=T, row.names=1))
+
+
+
+
+
+
+###########
+# Filtering
+# THIS IS THE PART THAT IS DIFFERENT FROM 7_time_courses
+###########
+
+# filter the counts table with the Venn diagram intersection
+counts.scaled <- subset(counts.scaled, rownames(counts.scaled) %in% miRNA.venn.intersect)
+counts.median.scaled <- subset(counts.median.scaled, rownames(counts.median.scaled) %in% miRNA.venn.intersect)
+
+
+
 
 
 

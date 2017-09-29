@@ -121,7 +121,7 @@ plot_median_expr_tc_w_pam <- function(df, name, type, line=TRUE) {
 
 
 # plot DESeq2 Log2FoldChange time courses with Strain as a colour.
-plot_deseq_lfc_tc_wstrain <- function(deseq2.tc.files, deseq2.strain.file, deseq2.strain.signif.file, filename.out) {
+plot_deseq_lfc_tc_wstrain <- function(deseq2.tc.files, deseq2.strain.file, deseq2.strain.signif.file, filter.vec=c(), filename.out) {
   
   # Merge time course data sets
   #############################
@@ -134,9 +134,17 @@ plot_deseq_lfc_tc_wstrain <- function(deseq2.tc.files, deseq2.strain.file, deseq
   # Extract DESeq:strain for colour information
   #############################################
   # Load log2FoldChange for Strain
-  df.strain <- read.table(deseq2.strain.file, sep=",",fill=T,header=T,row.names=1)[,2]
+  df.strain <- read.table(deseq2.strain.file, sep=",",fill=T,header=T,row.names=1)
   # Extract the names of the significant miRNA when contrast:Strain. 
   df.strain.signif.mirna <- rownames(read.table(deseq2.strain.signif.file, sep=",",fill=T,header=T,row.names=1))
+  
+  # Filtered a subset of miRNA
+  ############################
+  if(length(filter.vec) != 0) {
+    df.tc <- subset(df.tc, rownames(df.tc) %in% filter.vec)
+    df.strain <- subset(df.strain, rownames(df.strain) %in% filter.vec)
+    df.strain.signif.mirna <- subset(df.strain.signif.mirna, df.strain.signif.mirna %in% filter.vec)
+  }
   
   # Melt and plot data frames
   ###########################
@@ -144,7 +152,7 @@ plot_deseq_lfc_tc_wstrain <- function(deseq2.tc.files, deseq2.strain.file, deseq
   # add miRNA as new row
   df$miRNA <- rownames(df)
   # Add strain (colour)
-  df$colour <- df.strain
+  df$colour <- df.strain[,2]
   # Melt times so that we have 'miRNA', 'colour', 'variable' (time-cols), 'value' (time-vals)
   df.melt <- melt(df, id=c('miRNA','colour'))
   # Plot
@@ -163,7 +171,7 @@ plot_deseq_lfc_tc_wstrain <- function(deseq2.tc.files, deseq2.strain.file, deseq
 
 
 # plot DESeq2 Log2FoldChange time courses with PAM clustering labels as a colour.
-plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filename.out) {
+plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filter.vec=c(), filename.out) {
   
   # Merge time course data sets
   #############################
@@ -177,6 +185,13 @@ plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filename.out
   #############################################
   # Load strain information
   df.pam <- read.table(pam.clust.file, sep=",",fill=T,header=T,row.names=1)
+  
+  # Filtered a subset of miRNA
+  ############################
+  if(length(filter.vec) != 0) {
+    df.tc <- subset(df.tc, rownames(df.tc) %in% filter.vec)
+    df.pam <- subset(df.pam, rownames(df.pam) %in% filter.vec)
+  }
   
   # Melt and plot data frames
   ###########################
@@ -247,7 +262,7 @@ plotPrettyPCA2Var <- function(x, intgroup=c("condition1", "condition2"), ntop=50
 
 # use these functions for clustering like heatplot.
 dist.pear <- function(x) as.dist(1-cor(t(x)))
-hclust.ave <- function(x) hclust(x, method="ward")
+hclust.ave <- function(x) hclust(x, method="ward.D")
 
 # plot the counts matrix using heatmap.2
 plot_counts_matrix_heatmap <- function(df, filename="heatmap.png", palette=redgreen(50), dendrogram="both", scale="none", trace="none", labRow=FALSE, ylab='miRNA', xlab='Samples') {
@@ -262,7 +277,7 @@ plot_counts_matrix_heatmap <- function(df, filename="heatmap.png", palette=redgr
 
 
 # plot the counts matrix using heatplot
-plot_counts_matrix_heatplot <- function(df, filename="heatplot.png", dendrogram="both", scale="row", method="ward", labRow=FALSE, ylab='miRNA', xlab='Samples') {
+plot_counts_matrix_heatplot <- function(df, filename="heatplot.png", dendrogram="both", scale="row", method="ward.D", labRow=FALSE, ylab='miRNA', xlab='Samples') {
   png(file=filename, width=8, height=8, units="in", bg="white", res=300)  
   heatplot(df, 
            dend=dendrogram, scale=scale, 
