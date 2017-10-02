@@ -1,5 +1,10 @@
 # Pipeline for processing miRNA sequencing data set
 
+#### Introduction
+Each folder starting with a number is a pipeline step. Inside each of these folders, there are one or more R scripts. The main script has the same name of the folder, without the number. 
+The script `run_all.R` executes every steps. 
+
+
 #### data
 The data sets.
 
