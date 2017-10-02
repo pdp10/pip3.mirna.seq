@@ -2,8 +2,23 @@
 # In R 3.2.2
 
 # https://github.com/wilkelab/cowplot/issues/53
-> devtools::install_url("https://github.com/wilkelab/cowplot/archive/0.6.3.zip")
-> install.packages("factoextra")
+devtools::install_url("https://github.com/wilkelab/cowplot/archive/0.6.3.zip")
 
-> install.packages("rgl")
-> install.packages("Rtsne")
+install.packages("factoextra")
+install.packages("rgl")
+install.packages("Rtsne")
+
+install.package("reshape2")
+install.package("ggplot2")
+install.package("data.table")
+install.package("VennDiagram")
+
+install.packages("ggfortify")
+install.packages("cluster")
+install.packages("grid")
+install.packages("gridExtra")
+
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("made4")   # heatplot
+biocLite("DESeq2")
