@@ -61,8 +61,35 @@ theme_basic <- function(){
 ##############
 
 
+# Plot a data frame of lines and a data frame of points.
+plot_all_expr_tc_wcolour <- function(df.line, df.point, filename, title='expression', xlab='time [m]', ylab='median standardised expression', colorlab='strain') {
+  g <- ggplot() +
+    geom_line(data=df.line, aes(x=variable, y=value, group=id, color=colour)) + 
+    geom_point(data=df.point, aes(x=variable, y=value, group=id, color=colour)) +
+    theme_basic() + 
+    labs(title=title, x=xlab, y=ylab, color=colorlab)
+  ggsave(filename, width=4, height=4, dpi=300)
+  return(g)
+}
+
+
+# Plot a data frame of lines and a data frame of points.
+plot_median_expr_tc_wcolour <- function(df.line, df.point, filename, title='expression', xlab='time [m]', ylab='median standardised expression', colorlab='strain') {
+  g <- ggplot() +
+    geom_line(data=df.line, aes(x=variable, y=value, group=colour, color=colour)) + 
+    geom_point(data=df.point, aes(x=variable, y=value, group=colour, color=colour)) +
+    theme_basic() + 
+    labs(title=title, x=xlab, y=ylab, color=colorlab)
+  ggsave(filename, width=4, height=4, dpi=300)
+  return(g)
+}
+
+
+
+
+
 # Plot miRNAs time courses with colour
-plot_expr_tc_wcolour <- function(df, filename, line=TRUE, gradient=TRUE, title='miRNA expression', xlab='time [m]', ylab='expression', colorlab='strain') {
+plot_expr_tc_wcolour <- function(df, filename, line=TRUE, gradient=TRUE, title='expression', xlab='time [m]', ylab='expression', colorlab='strain') {
   g <- ggplot(data=df, aes(x=variable, y=value, group=miRNA, color=colour)) + 
     theme_basic() + 
     labs(title=title, x=xlab, y=ylab, color=colorlab)
@@ -75,11 +102,12 @@ plot_expr_tc_wcolour <- function(df, filename, line=TRUE, gradient=TRUE, title='
     g <- g + geom_point()
   }
   ggsave(filename, width=4, height=4, dpi=300)
+  return(g)
 }
 
 
 # Plot miRNAs time courses
-plot_expr_tc <- function(df, filename, line=TRUE, title='miRNA expression', xlab='time [m]', ylab='expression') {
+plot_expr_tc <- function(df, filename, line=TRUE, title='expression', xlab='time [m]', ylab='expression') {
   g <- ggplot(data=df, aes(x=variable, y=value, group=miRNA)) + 
     theme_basic() + 
     labs(title=title, x=xlab, y=ylab)
@@ -89,34 +117,9 @@ plot_expr_tc <- function(df, filename, line=TRUE, title='miRNA expression', xlab
     g <- g + geom_point()
   }
   ggsave(filename, width=4, height=4, dpi=300)
+  return(g)
 }
 
-
-
-# Plot median time courses based on pam class
-plot_median_expr_tc_w_pam <- function(df, name, type, line=TRUE) {
-  # convert data.frame to data.table
-  dt <- data.table(df)  
-  # median every column by `pam` class (and for each time point)
-  dt.median <- dt[, lapply(.SD, median), by=pam]
-  # save the data.table
-  write.csv(dt.median, file=paste0(name, '.csv'), row.names=F, quote=FALSE)
-  # melt the data.table
-  dt.median.melt <- melt(dt.median, id=c('pam'))
-  
-  # Plot miRNA using PAM clustering for colours
-  g <- ggplot(dt.median.melt, aes(x=variable, y=value, group=pam, color=pam)) + 
-    ggtitle(paste0('miRNA expression ', type)) +
-    xlab('Time [m]') + 
-    ylab('median standardised expression') +
-    theme_basic()
-  if(line) {
-    g <- g + geom_line()
-  } else {
-    g <- g + geom_point()
-  }
-  ggsave(paste0(name, ".png"), width=4, height=4, dpi=300)
-}
 
 
 
@@ -151,7 +154,7 @@ plot_deseq_lfc_tc_wstrain <- function(deseq2.tc.files, deseq2.strain.file, deseq
   df <- df.tc
   # add miRNA as new row
   df$miRNA <- rownames(df)
-  # Add strain (colour)
+  # Add strain (colour) (Log2 fold change)
   df$colour <- df.strain[,2]
   # Melt times so that we have 'miRNA', 'colour', 'variable' (time-cols), 'value' (time-vals)
   df.melt <- melt(df, id=c('miRNA','colour'))

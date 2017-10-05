@@ -54,14 +54,13 @@ source('../utilities/plots.R')
 # Load data sets
 ################
 
-clusters <- 3
+suffix <-".csv"
 
 # select the files containing the data
 location <- "../data"
 filename.scaled <- "summarised_mirna_counts_after_mapping_filtered_scaled"
 filename.median.scaled <- "summarised_mirna_counts_after_mapping_filtered_median_scaled"
 #filename.data.table <- "summarised_mirna_counts_after_mapping_filtered_data_table"
-suffix <-".csv"
 
 # load scaled counts
 counts.scaled <- read.table(paste0(location,"/",filename.scaled,suffix), sep=",",fill=T,header=T,row.names=1)
@@ -71,113 +70,74 @@ counts.median.scaled <- read.table(paste0(location,"/",filename.median.scaled,su
 
 
 
+# clustering
+location.pam <- "../6_clustering"
+filename.pam <- "pam_clustering_labels"
+# load scaled counts
+pam.labels <- read.table(paste0(location.pam,"/",filename.pam, suffix), sep=",",fill=T,header=T,row.names=1)
+
+# extract the number of clusters
+pam.classes <- unique(pam.labels[,1])
 
 
+# combine the counts matrix with PAM clustering
+counts.median.scaled.wpam <- cbind(counts.median.scaled, pam=pam.labels[,1])
 
-######################################################
-# Separate counts.median.scaled into three data frames
-######################################################
 
-# Separate miWT, miA66, miA66_noEGF. We also add miRNA names as a new column (we need this for melting)
-counts.scaled.miWT <- data.frame(miRNA=rownames(counts.scaled), counts.median.scaled[, grepl("miWT", colnames(counts.median.scaled)), drop=FALSE])
-counts.scaled.miA66 <- data.frame(miRNA=rownames(counts.scaled), counts.median.scaled[, grepl("miA66", colnames(counts.median.scaled)), drop=FALSE])
-counts.scaled.miA66.noEGF <- data.frame(miRNA=rownames(counts.scaled), counts.median.scaled[, grepl("noEGF", colnames(counts.median.scaled)), drop=FALSE])
-
-# remove column `miA66_noEGF`` from miA66 data frame as this is treated separately.
-counts.scaled.miA66 <- subset(counts.scaled.miA66, select = -miA66_noEGF)
-
-# rename columns so that they only contain times (useful for melting later on)
-colnames(counts.scaled.miWT) <- gsub('miWT_', '', colnames(counts.scaled.miWT))
-colnames(counts.scaled.miA66) <- gsub('miA66_', '', colnames(counts.scaled.miA66))
-# this is renamed manually
-colnames(counts.scaled.miA66.noEGF) <- c('miRNA', '300')
 
 
 
 
 ###################################################
-# Plot all miRNA time courses by WT, A66, and noEGF
+# Split the count matrix depending on cluster class
 ###################################################
-
-# melt the data.table
-df.melt <- melt(counts.scaled.miWT, id=c('miRNA'))
-# plot
-plot_expr_tc(df.melt, filename="miRNA_tc__miWT.png", line=TRUE, title='miRNA expression (WT)', xlab='time [m]', ylab='median standardised expression')
-
-# melt the data.table
-df.melt <- melt(counts.scaled.miA66, id=c('miRNA'))
-# plot
-plot_expr_tc(df.melt, filename="miRNA_tc__miA66.png", line=TRUE, title='miRNA expression (A66)', xlab='time [m]', ylab='median standardised expression')
-
-# melt the data.table
-df.melt <- melt(counts.scaled.miA66.noEGF, id=c('miRNA'))
-# plot
-plot_expr_tc(df.melt, filename="miRNA_tc__miA66noEGF.png", line=FALSE, title='miRNA expression (A66 noEGF)', xlab='time [m]', ylab='median standardised expression')
+# split_counts_matrix_by_pam.class() returns a list of lists
+l <- split_counts_matrix_by_pam_class(df.wpam=counts.median.scaled.wpam, pam.classes=pam.classes)
+counts.clusters.wt.a66 <- l[[1]]
+counts.clusters.a66.noEGF <- l[[2]]
 
 
+##################
+# Plot data frames
+##################
 
-
-#########################
-# ADD PAM clustering info
-#########################
-
-# `scale` and `centre` must be FALSE because we already scaled and centred our data.
-scale. <- FALSE
-centre <- FALSE
-
-# run PAM clustering for WT, A66, A66noEGF
-pam.miWT <- run_pam(subset(counts.scaled.miWT, select = -c(miRNA), drop=FALSE), clusters, "median_counts_WT_samples__pam", scale., centre)
-pam.miA66 <- run_pam(subset(counts.scaled.miA66, select = -c(miRNA), drop=FALSE), clusters, "median_counts_A66_samples__pam", scale., centre)
-pam.miA66.noEGF <- run_pam(subset(counts.scaled.miA66.noEGF, select = -c(miRNA), drop=FALSE), clusters, "median_counts_A66noEGF_samples__pam", scale., centre)
-
-# add PAM labels
-counts.scaled.miWT.pam <- data.frame(counts.scaled.miWT, colour=factor(pam.miWT$clustering), check.names=FALSE)
-counts.scaled.miA66.pam <- data.frame(counts.scaled.miA66, colour=factor(pam.miA66$clustering), check.names=FALSE)
-counts.scaled.miA66.noEGF.pam <- data.frame(counts.scaled.miA66.noEGF, colour=factor(pam.miA66.noEGF$clustering), check.names=FALSE)
-
-# melt & plot
-df.melt <- melt(counts.scaled.miWT.pam, id=c('miRNA', 'colour'))
-plot_expr_tc_wcolour(df.melt, filename="miRNA_tc__miWT_pam_clust.png", line=TRUE, gradient=FALSE, title='miRNA expression (WT)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
-# melt & plot
-df.melt <- melt(counts.scaled.miA66.pam, id=c('miRNA', 'colour'))
-plot_expr_tc_wcolour(df.melt, filename="miRNA_tc__miA66_pam_clust.png", line=TRUE, gradient=FALSE, title='miRNA expression (A66)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
-# melt & plot
-df.melt <- melt(counts.scaled.miA66.noEGF.pam, id=c('miRNA', 'colour'))
-plot_expr_tc_wcolour(df.melt, filename="miRNA_tc__miA66noEGF_pam_clust.png", line=FALSE, gradient=FALSE, title='miRNA expression (A66 noEGF)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
+for(pam.class in pam.classes) { 
+  # melt the data.table
+  df.wt.a66.melt <- melt(counts.clusters.wt.a66[[pam.class]], id=c('id', 'colour'))
+  df.a66.noEGF.melt <- melt(counts.clusters.a66.noEGF[[pam.class]], id=c('id', 'colour'))
+  
+  plot_all_expr_tc_wcolour(df.line=df.wt.a66.melt, 
+                              df.point=df.a66.noEGF.melt, 
+                              filename=paste0('miRNA_tc__clust_', pam.class, '.png'),
+                              title=paste0('miRNA expression - clust: ', pam.class))
+}
 
 
 
 
-#####################################################################################################
-# Median of the miRNAs belonging to the same cluster class. This for miWT, miA66, and miA66.noEGF
-#####################################################################################################
 
-# calculate the median
-dt.median <- median_df_by_colour_id(subset(counts.scaled.miWT.pam, select = -c(miRNA), drop=FALSE), filename='miRNA_tc_miWT_pam_clust_median.csv')
-# we restore this column to make the plot work. We group by miRNA. Here is pointless really, but this avoids the creation of a new plot function
-dt.median$miRNA <- dt.median$colour
-# melt the data.table
-dt.median.melt <- melt(dt.median, id=c('miRNA', 'colour'))
-# plot
-plot_expr_tc_wcolour(dt.median.melt, filename='miRNA_tc_miWT_pam_clust_median.png', 
-                     line=TRUE, gradient=FALSE, title='miRNA expression (WT)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
+####################################################
+# Calculate the median for each PAM class and strain
+####################################################
+# split_counts_matrix_by_pam.class() returns a list of lists
+l <- median_for_each_pam_class_and_strain(df.wt.a66=counts.clusters.wt.a66, df.a66.noEGF=counts.clusters.a66.noEGF, pam.classes=pam.classes)
+counts.clusters.wt.a66.median <- l[[1]]
+counts.clusters.a66.noEGF.median <- l[[2]]
 
-dt.median <- median_df_by_colour_id(subset(counts.scaled.miA66.pam, select = -c(miRNA), drop=FALSE), filename='miRNA_tc_miA66_pam_clust_median.csv')
-# we restore this column to make the plot work. We group by miRNA. Here is pointless really, but this avoids the creation of a new plot function
-dt.median$miRNA <- dt.median$colour
-# melt the data.table
-dt.median.melt <- melt(dt.median, id=c('miRNA', 'colour'))
-# plot
-plot_expr_tc_wcolour(dt.median.melt, filename='miRNA_tc_miA66_pam_clust_median.png', 
-                     line=TRUE, gradient=FALSE, title='miRNA expression (A66)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
 
-dt.median <- median_df_by_colour_id(subset(counts.scaled.miA66.noEGF.pam, select = -c(miRNA), drop=FALSE), filename='miRNA_tc_miA66noEGF_pam_clust_median.csv')
-# we restore this column to make the plot work. We group by miRNA. Here is pointless really, but this avoids the creation of a new plot function
-dt.median$miRNA <- dt.median$colour
-# melt the data.table
-dt.median.melt <- melt(dt.median, id=c('miRNA', 'colour'))
-# plot
-plot_expr_tc_wcolour(dt.median.melt, filename='miRNA_tc_miA66noEGF_pam_clust_median.png', 
-                     line=FALSE, gradient=FALSE, title='miRNA expression (A66noEGF)', xlab='time [m]', ylab='median standardised expression', colorlab='pam')
+#############################
+# Plot the median data frames
+#############################
+
+for(pam.class in pam.classes) {
+  # melt the data.table
+  df.wt.a66.melt <- melt(counts.clusters.wt.a66.median[[pam.class]], id=c('colour'))
+  df.a66.noEGF.melt <- melt(counts.clusters.a66.noEGF.median[[pam.class]], id=c('colour'))
+
+  plot_median_expr_tc_wcolour(df.line=df.wt.a66.melt,
+                              df.point=df.a66.noEGF.melt,
+                              filename=paste0('miRNA_tc__median_clust_', pam.class, '.png'),
+                              title=paste0('miRNA expression - clust: ', pam.class))
+}
 
 
