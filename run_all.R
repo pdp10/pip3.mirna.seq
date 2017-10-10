@@ -26,16 +26,16 @@
 
 
 #1
-print('1_prepare_counts_table')
-setwd('1_prepare_counts_table')
-source('prepare_counts_table.R')
+print('1_prepare_samples_table')
+setwd('1_prepare_samples_table')
+source('prepare_samples_table.R')
 rm(list = ls())
 setwd('../')
 
 #2
-print('2_prepare_samples_table')
-setwd('2_prepare_samples_table')
-source('prepare_samples_table.R')
+print('2_prepare_counts_table')
+setwd('2_prepare_counts_table')
+source('prepare_counts_table.R')
 rm(list = ls())
 setwd('../')
 

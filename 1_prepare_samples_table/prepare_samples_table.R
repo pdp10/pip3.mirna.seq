@@ -31,15 +31,35 @@
 # The metadata table is also called sample table in DESEq.
 
 
-# select the file countaining the filtered counts data
+# select the file countaining the counts data
 location <- "../data"
-filename <- "summarised_mirna_counts_after_mapping_filtered"
+filename <- "summarised_mirna_counts_after_mapping"
 suffix <-".csv"
 
 
+###########
+# Load DATA
+###########
 # load counts
 counts <- read.table(paste0(location,"/",filename,suffix), sep=",",fill=T,header=T,row.names=1)
 
+
+
+################
+# DATA FILTERING
+################
+
+# remove 'unmap' counts (unmapped)
+counts<-counts[, -grep('unmap', colnames(counts))]
+
+# remove 'base' counts (these seem to be replicates but have a wrong base)
+counts <- counts[, -grep('base', colnames(counts))]
+
+
+
+#############################################
+# Calculate the metadata table for the counts 
+#############################################
 
 # Extract everything (time points, noEGF) which is between two '_' . Arbitrary strings before and after (.*)
 # replace the whole string with the contents of the first capturing group: \\1 (we need to escape the backslash, hence the double backslash)
@@ -74,5 +94,5 @@ counts.metadata <- data.frame(
 
 
 # write the counts metadata to file
-write.csv(counts.metadata, file=paste0(location,"/",filename, "_metadata", suffix), row.names=FALSE)
+write.csv(counts.metadata, file=paste0(location,"/",filename, "_filtered_metadata", suffix), row.names=FALSE)
 

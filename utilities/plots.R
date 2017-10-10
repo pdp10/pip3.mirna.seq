@@ -44,8 +44,8 @@ source('../utilities/deseq.R')
 ################
 
 # A simple theme without grid
-theme_basic <- function(){
-  theme_bw() %+replace%
+theme_basic <- function(base_size = 12){
+  theme_bw(base_size) %+replace%
   theme(
       panel.grid.major=element_blank(), 
       panel.grid.minor=element_blank()
@@ -62,7 +62,7 @@ theme_basic <- function(){
 
 
 # Plot a data frame of lines and a data frame of points.
-plot_all_expr_tc_wcolour <- function(df.line, df.point, filename, title='expression', xlab='time [m]', ylab='median standardised expression', colorlab='strain') {
+plot_all_expr_tc_wcolour <- function(df.line, df.point, filename, title='expression', xlab='time [m]', ylab='mean standardised expression', colorlab='strain') {
   g <- ggplot() +
     geom_line(data=df.line, aes(x=variable, y=value, group=id, color=colour)) + 
     geom_point(data=df.point, aes(x=variable, y=value, group=id, color=colour)) +
@@ -74,7 +74,7 @@ plot_all_expr_tc_wcolour <- function(df.line, df.point, filename, title='express
 
 
 # Plot a data frame of lines and a data frame of points.
-plot_median_expr_tc_wcolour <- function(df.line, df.point, filename, title='expression', xlab='time [m]', ylab='median standardised expression', colorlab='strain') {
+plot_mean_expr_tc_wcolour <- function(df.line, df.point, filename, title='expression', xlab='time [m]', ylab='mean standardised expression', colorlab='strain') {
   g <- ggplot() +
     geom_line(data=df.line, aes(x=variable, y=value, group=colour, color=colour)) + 
     geom_point(data=df.point, aes(x=variable, y=value, group=colour, color=colour)) +
@@ -223,7 +223,31 @@ plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filter.vec=c
 # PCA
 #####
 
-# Plot PCA nicely
+# Generic function for plot PCA (PC1, PC2, PC3)
+plot_pca <- function(df, eigen, filename) {
+  # PC1 vs PC2
+  c1c2.strain.time <- ggplot(df) + 
+    geom_point(aes(x=PC1, y=PC2, colour=strain, shape=as.factor(time)), size=3) +  
+    labs(x=sprintf("PC1 %.1f %%",eigen[1,2]), y=sprintf("PC2 %.1f %%",eigen[2,2]), shape='time (min)') +
+    theme_basic(base_size = 16)
+  
+  # PC2 vs PC3
+  c2c3.strain.time <- ggplot(df) + 
+    geom_point(aes(x=PC2, y=PC3, colour=strain, shape=as.factor(time)), size=3) +  
+    labs(x=sprintf("PC2 %.1f %%",eigen[2,2]), y=sprintf("PC3 %.1f %%",eigen[3,2]), shape='time (min)') +
+    theme_basic(base_size = 16)
+  
+  
+  ## COMBINED plots
+  c1c2c3.combined <- arrangeGrob(c1c2.strain.time, c2c3.strain.time, ncol=2)
+  ggsave(paste0(filename, "_pca_c1c2c3_combined.png"), plot=c1c2c3.combined, width=11, height=4, dpi=300)
+  
+  return(c1c2c3.combined)
+}
+
+
+
+# Plot PCA based on DESeq2:plotPCA()
 plotPrettyPCA1Var <- function(x, intgroup=c("condition"), ntop=500, plotColor=TRUE) {
   x.data <- plotPCA(x, intgroup=intgroup, ntop=ntop, returnData=TRUE)
   percentVar <- round(100 * attr(x.data, "percentVar"))
@@ -244,6 +268,7 @@ plotPrettyPCA1Var <- function(x, intgroup=c("condition"), ntop=500, plotColor=TR
     theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank())
 }
 
+# Plot PCA based on DESeq2:plotPCA()
 plotPrettyPCA2Var <- function(x, intgroup=c("condition1", "condition2"), ntop=500) {
   x.data <- plotPCA(x, intgroup=intgroup, ntop=ntop, returnData=TRUE)
   percentVar <- round(100 * attr(x.data, "percentVar"))

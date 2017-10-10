@@ -28,7 +28,7 @@
 
 # Plot time courses of all miRNA. 
 # - X is Time
-# - Y is median of standardised miRNA expression
+# - Y is mean of standardised miRNA expression
 # - colour is PAM clustering
 
 
@@ -36,7 +36,6 @@
 library(reshape2)
 library(ggplot2)
 
-library(ggfortify) # autoplot
 library(cluster) # pam
 
 library(grid)
@@ -58,15 +57,15 @@ suffix <-".csv"
 
 # select the files containing the data
 location <- "../data"
-filename.scaled <- "summarised_mirna_counts_after_mapping_filtered_scaled"
-filename.median.scaled <- "summarised_mirna_counts_after_mapping_filtered_median_scaled"
-#filename.data.table <- "summarised_mirna_counts_after_mapping_filtered_data_table"
+filename <- "summarised_mirna_counts_after_mapping_filtered_rlog_scaled"
+filename.mean <- "summarised_mirna_counts_after_mapping_filtered_rlog_mean_scaled"
 
-# load scaled counts
-counts.scaled <- read.table(paste0(location,"/",filename.scaled,suffix), sep=",",fill=T,header=T,row.names=1)
 
-# load median scaled counts
-counts.median.scaled <- read.table(paste0(location,"/",filename.median.scaled,suffix), sep=",",fill=T,header=T,row.names=1)
+# load counts
+counts <- read.table(paste0(location,"/",filename,suffix), sep=",",fill=T,header=T,row.names=1)
+
+# load counts means
+counts.mean <- read.table(paste0(location,"/",filename.mean,suffix), sep=",",fill=T,header=T,row.names=1)
 
 
 
@@ -81,7 +80,7 @@ pam.classes <- unique(pam.labels[,1])
 
 
 # combine the counts matrix with PAM clustering
-counts.median.scaled.wpam <- cbind(counts.median.scaled, pam=pam.labels[,1])
+counts.mean.wpam <- cbind(counts.mean, pam=pam.labels[,1])
 
 
 
@@ -92,7 +91,7 @@ counts.median.scaled.wpam <- cbind(counts.median.scaled, pam=pam.labels[,1])
 # Split the count matrix depending on cluster class
 ###################################################
 # split_counts_matrix_by_pam.class() returns a list of lists
-l <- split_counts_matrix_by_pam_class(df.wpam=counts.median.scaled.wpam, pam.classes=pam.classes)
+l <- split_counts_matrix_by_pam_class(df.wpam=counts.mean.wpam, pam.classes=pam.classes)
 counts.clusters.wt.a66 <- l[[1]]
 counts.clusters.a66.noEGF <- l[[2]]
 
@@ -117,26 +116,26 @@ for(pam.class in pam.classes) {
 
 
 ####################################################
-# Calculate the median for each PAM class and strain
+# Calculate the mean for each PAM class and strain
 ####################################################
 # split_counts_matrix_by_pam.class() returns a list of lists
-l <- median_for_each_pam_class_and_strain(df.wt.a66=counts.clusters.wt.a66, df.a66.noEGF=counts.clusters.a66.noEGF, pam.classes=pam.classes)
-counts.clusters.wt.a66.median <- l[[1]]
-counts.clusters.a66.noEGF.median <- l[[2]]
+l <- mean_for_each_pam_class_and_strain(df.wt.a66=counts.clusters.wt.a66, df.a66.noEGF=counts.clusters.a66.noEGF, pam.classes=pam.classes)
+counts.clusters.wt.a66.mean <- l[[1]]
+counts.clusters.a66.noEGF.mean <- l[[2]]
 
 
 #############################
-# Plot the median data frames
+# Plot the mean data frames
 #############################
 
 for(pam.class in pam.classes) {
   # melt the data.table
-  df.wt.a66.melt <- melt(counts.clusters.wt.a66.median[[pam.class]], id=c('colour'))
-  df.a66.noEGF.melt <- melt(counts.clusters.a66.noEGF.median[[pam.class]], id=c('colour'))
+  df.wt.a66.melt <- melt(counts.clusters.wt.a66.mean[[pam.class]], id=c('colour'))
+  df.a66.noEGF.melt <- melt(counts.clusters.a66.noEGF.mean[[pam.class]], id=c('colour'))
 
-  plot_median_expr_tc_wcolour(df.line=df.wt.a66.melt,
+  plot_mean_expr_tc_wcolour(df.line=df.wt.a66.melt,
                               df.point=df.a66.noEGF.melt,
-                              filename=paste0('miRNA_tc__median_clust_', pam.class, '.png'),
+                              filename=paste0('miRNA_tc__mean_clust_', pam.class, '.png'),
                               title=paste0('miRNA expression - clust: ', pam.class))
 }
 

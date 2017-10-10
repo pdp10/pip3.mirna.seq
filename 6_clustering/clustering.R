@@ -30,7 +30,7 @@
 
 
 library(factoextra) # eigenvalues
-library(ggfortify) # autoplot
+library(ggplot2)
 library(cluster) # pam
 
 library(grid)
@@ -51,13 +51,13 @@ suffix <-".csv"
 
 # Counts Matrix
 location.counts <- "../data"
-filename.counts <- "summarised_mirna_counts_after_mapping_filtered_scaled"
-counts.scaled <- read.table(paste0(location.counts, "/", filename.counts, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
+filename.counts <- "summarised_mirna_counts_after_mapping_filtered_rlog_scaled"
+counts <- read.table(paste0(location.counts, "/", filename.counts, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
 
 
-# PCA rotation matrix for counts.scaled
+# PCA rotation matrix for counts
 location.pca <- "../3_quality_control"
-filename.pca <- "summarised_mirna_counts_after_mapping_filtered_scaled_PCA_rotation"
+filename.pca <- "summarised_mirna_counts_after_mapping_filtered_rlog_scaled_samples_PCA_rotation"
 df.pca <- read.table(paste0(location.pca, "/", filename.pca, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
 
 
@@ -92,15 +92,15 @@ deseq.time.padj.thres.val <- 0.05
 deseq.time.lfc.thres.val <- 0.1
 
 
-# Create a pca data frame of significant loadings for PC2.
+# Create a pca data frame of significant loadings for PC1.
 # remove rows containing NA
 df.pca.filt <- df.pca[complete.cases(df.pca), ]
 # filter
-df.pca.filt <- df.pca[df.pca$PC2 < -pca.thres.val | df.pca$PC2 > pca.thres.val,]
+df.pca.filt <- df.pca[df.pca$PC1 < -pca.thres.val | df.pca$PC1 > pca.thres.val,]
 # extract names
 df.pca.filt.miRNA <- rownames(df.pca.filt)
 # Write list of miRNAs
-write.csv(df.pca.filt, file=paste0("miRNA__filtered_pca_pc2__loadings_gt_", gsub('\\.','', pca.thres.val), suffix), row.names=T, quote=FALSE)
+write.csv(df.pca.filt, file=paste0("miRNA__filtered_pca_PC1__loadings_gt_", gsub('\\.','', pca.thres.val), suffix), row.names=T, quote=FALSE)
 
 # Create a DESeq2:strain results data frame of significant miRNA (padj, lfc)
 df.deseq.strain.filt <- df.deseq.strain[complete.cases(df.deseq.strain), ]
@@ -129,31 +129,31 @@ write.csv(df.deseq.time.filt, file=paste0("miRNA__filtered_deseq_time__padj_", g
 
 # Create vectors of labels when the miRNA is significative ('' otherwise). 
 
-# vector of mirna with filtered PC2
-mirna.pca.pc2.filt.labels <- ifelse(rownames(counts.scaled) %in% df.pca.filt.miRNA, rownames(counts.scaled), '')
+# vector of mirna with filtered PC1
+mirna.pca.PC1.filt.labels <- ifelse(rownames(counts) %in% df.pca.filt.miRNA, rownames(counts), '')
 # vector of mirna with significative DESeq2:Strain
-mirna.deseq.strain.filt.labels <- ifelse(rownames(counts.scaled) %in% df.deseq.strain.filt.miRNA, rownames(counts.scaled), '')
+mirna.deseq.strain.filt.labels <- ifelse(rownames(counts) %in% df.deseq.strain.filt.miRNA, rownames(counts), '')
 # vector of mirna with significative DESeq2:Time
-mirna.deseq.time.filt.labels <- ifelse(rownames(counts.scaled) %in% df.deseq.time.filt.miRNA, rownames(counts.scaled), '')
+mirna.deseq.time.filt.labels <- ifelse(rownames(counts) %in% df.deseq.time.filt.miRNA, rownames(counts), '')
 
-# vector of mirna with filtered PC2 and significative DESeq2:Strain
-mirna.pca.pc2.deseq.strain.filt.labels <- ifelse(mirna.deseq.strain.filt.labels %in% mirna.pca.pc2.filt.labels, mirna.deseq.strain.filt.labels, '')
-# vector of mirna with filtered PC2 and significative DESeq2:Time
-mirna.pca.pc2.deseq.time.filt.labels <- ifelse(mirna.deseq.time.filt.labels %in% mirna.pca.pc2.filt.labels, mirna.deseq.time.filt.labels, '')
+# vector of mirna with filtered PC1 and significative DESeq2:Strain
+mirna.pca.PC1.deseq.strain.filt.labels <- ifelse(mirna.deseq.strain.filt.labels %in% mirna.pca.PC1.filt.labels, mirna.deseq.strain.filt.labels, '')
+# vector of mirna with filtered PC1 and significative DESeq2:Time
+mirna.pca.PC1.deseq.time.filt.labels <- ifelse(mirna.deseq.time.filt.labels %in% mirna.pca.PC1.filt.labels, mirna.deseq.time.filt.labels, '')
 
 
 # Unify the data sets (is there a better way to pass the thresholds without adding a new column?? aes, aes_string seem not to work..)
-df.unified.strain <- data.frame(counts.scaled, label=mirna.pca.pc2.deseq.strain.filt.labels)
-df.unified.time <- data.frame(counts.scaled, label=mirna.pca.pc2.deseq.time.filt.labels)
+df.unified.strain <- data.frame(counts, label=mirna.pca.PC1.deseq.strain.filt.labels)
+df.unified.time <- data.frame(counts, label=mirna.pca.PC1.deseq.time.filt.labels)
 
 # PLOT
-# PC2 and DESeq:Strain
-plot_clustering(df.pam=counts.scaled, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_pc2'), labels=FALSE, scale.)
-plot_clustering(df.pam=counts.scaled, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_pc2'), labels=TRUE, scale.)
+# PC1 and DESeq:Strain
+plot_clustering(df.pam=counts, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_PC1'), labels=FALSE, scale.)
+plot_clustering(df.pam=counts, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_PC1'), labels=TRUE, scale.)
 
-# PC2 and DESeq:Time
-plot_clustering(df.pam=counts.scaled, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_pc2'), labels=FALSE, scale.)
-plot_clustering(df.pam=counts.scaled, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_pc2'), labels=TRUE, scale.)
+# PC1 and DESeq:Time
+plot_clustering(df.pam=counts, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_PC1'), labels=FALSE, scale.)
+plot_clustering(df.pam=counts, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_PC1'), labels=TRUE, scale.)
 
 
 
@@ -164,38 +164,36 @@ plot_clustering(df.pam=counts.scaled, df.full=df.unified.time, k=clusters, filen
 # Plot Venn Diagram
 ###################
 
-# PCA:PC2 vs DESeq2:strain
+# PCA:PC1 vs DESeq2:strain
 plot_venn_diagram(data=list(df.pca.filt.miRNA, df.deseq.strain.filt.miRNA), 
-                  filename="venn_diagram_intersect__signif_deseq_strain_VS_filt_pca_pc2",
-                  category.names=c("PCA:PC2", "DESeq:strain"),
+                  filename="venn_diagram_intersect__signif_deseq_strain_VS_filt_pca_PC1",
+                  category.names=c("PCA:PC1", "DESeq:strain"),
                   colours=c('green', 'magenta'))
 # Save the intersection of these two sets
-df.pc2.deseq.strain.miRNA <- intersect(df.pca.filt.miRNA, df.deseq.strain.filt.miRNA)
-write.csv(df.pc2.deseq.strain.miRNA, file=paste0("venn_diagram_intersect__filt_pca_pc2_VS_signif_deseq_strain", suffix), row.names=F, quote=FALSE)
+df.PC1.deseq.strain.miRNA <- intersect(df.pca.filt.miRNA, df.deseq.strain.filt.miRNA)
+write.csv(df.PC1.deseq.strain.miRNA, file=paste0("venn_diagram_intersect__filt_pca_PC1_VS_signif_deseq_strain", suffix), row.names=F, quote=FALSE)
 
 
 
-# PCA:PC2 vs DESeq2:time
+# PCA:PC1 vs DESeq2:time
 plot_venn_diagram(data=list(df.pca.filt.miRNA, df.deseq.time.filt.miRNA), 
-                  filename="venn_diagram_intersect__signif_deseq_time_VS_filt_pca_pc2",
-                  category.names=c("PCA:PC2", "DESeq:time"),
+                  filename="venn_diagram_intersect__signif_deseq_time_VS_filt_pca_PC1",
+                  category.names=c("PCA:PC1", "DESeq:time"),
                   colours=c('green', 'magenta'))
 # Save the intersection of these two sets
-df.pc2.deseq.time.miRNA <- intersect(df.pca.filt.miRNA, df.deseq.time.filt.miRNA)
-write.csv(df.pc2.deseq.time.miRNA, file=paste0("venn_diagram_intersect__filt_pca_pc2_VS_signif_deseq_time", suffix), row.names=F, quote=FALSE)
+df.PC1.deseq.time.miRNA <- intersect(df.pca.filt.miRNA, df.deseq.time.filt.miRNA)
+write.csv(df.PC1.deseq.time.miRNA, file=paste0("venn_diagram_intersect__filt_pca_PC1_VS_signif_deseq_time", suffix), row.names=F, quote=FALSE)
 
 
 
-# PCA:PC2 vs DESeq2:strain vs DESeq2:time
+# PCA:PC1 vs DESeq2:strain vs DESeq2:time
 plot_venn_diagram(data=list(df.pca.filt.miRNA, df.deseq.strain.filt.miRNA, df.deseq.time.filt.miRNA), 
-                  filename="venn_diagram_intersect__signif_deseq_strain_VS_signif_deseq_time_VS_filt_pca_pc2",
-                  category.names=c("PCA:PC2", "DESeq:strain", "DESeq:time"),
+                  filename="venn_diagram_intersect__signif_deseq_strain_VS_signif_deseq_time_VS_filt_pca_PC1",
+                  category.names=c("PCA:PC1", "DESeq:strain", "DESeq:time"),
                   colours=c('green', 'magenta', 'yellow'))
 # Save the intersection of these two sets
-df.pc2.deseq.strain.time.miRNA <- intersect(df.pc2.deseq.strain.miRNA, df.pc2.deseq.time.miRNA)
-write.csv(df.pc2.deseq.strain.time.miRNA, file=paste0("venn_diagram_intersect__filt_pca_pc2_VS_signif_deseq_strain_VS_signif_deseq_time", suffix), row.names=F, quote=FALSE)
-
-
+df.PC1.deseq.strain.time.miRNA <- intersect(df.PC1.deseq.strain.miRNA, df.PC1.deseq.time.miRNA)
+write.csv(df.PC1.deseq.strain.time.miRNA, file=paste0("venn_diagram_intersect__filt_pca_PC1_VS_signif_deseq_strain_VS_signif_deseq_time", suffix), row.names=F, quote=FALSE)
 
 
 
@@ -206,62 +204,38 @@ write.csv(df.pc2.deseq.strain.time.miRNA, file=paste0("venn_diagram_intersect__f
 # Generate PCAs for statistically significant miRNA from DESeq:strain (contrast: WT vs A66 in strain)
 #############################################################################################
 
-# The purpose is to see whether the data separation detected on PCA:PC2 using all miRNAs 
+# The purpose is to see whether the data separation detected on PCA:PC1 using all miRNAs 
 # is still present within the group of significant miRNAs.
 
 # Create a counts table of significant miRNAs
-counts.scaled.deseq.strain.signif <- counts.scaled[rownames(counts.scaled) %in% df.deseq.strain.filt.miRNA,]
+counts.deseq.strain.signif <- counts[rownames(counts) %in% df.deseq.strain.filt.miRNA,]
 
-# Now we prepare PCA using this data set (the data set is already scaled, so we only need to compute the transpose as we are interested 
-# in the PCA for the samples)
-counts.scaled.deseq.strain.signif.t <- t(counts.scaled.deseq.strain.signif)
-
-# Now, create a data set from df.counts.signif.t with `strain` 
-counts.scaled.deseq.strain.signif.t.metadata <- counts.scaled.deseq.strain.signif.t
-## Extract STRAIN. Use grepl to create a logical vector whether WT appears or not in n.
-strain <- ifelse(grepl('WT', colnames(counts.scaled.deseq.strain.signif)), 'WT', 'A66')
-
-# now we add the columns
-counts.scaled.deseq.strain.signif.t.metadata <- cbind(counts.scaled.deseq.strain.signif.t.metadata, strain)
-
-
-# Run PCA
-pca <- prcomp(counts.scaled.deseq.strain.signif.t, center=TRUE, scale.=scale.)
+pca.reads <- prcomp(counts.deseq.strain.signif, center=TRUE, scale.=TRUE)
 # This provide a list of components with the respective variance (used for plotting)
-eigen <- get_eig(pca)     
-
+eigen <- get_eig(pca.reads)     
 # Plot the variance of PCA components
-png(paste0("pca__comp_variances__deseq_strain_signif_mirna",".png"), width=2000, height=1500, res=300)
-plot(pca, type = "l", main='Variance of PCA components')
+png(paste0(filename.counts,"_reads_pca_comp_variances",".png"), width=2000, height=1500, res=300)
+plot(pca.reads, type = "l", main='Variance of PCA components')
 dev.off()
-
-# Write the calculated PCA `rotation` (PCA loadings). This is the table miRNAs (rows) vs PCAs (cols).
-write.csv(pca$rotation, file=paste0("pca_loadings_filt_deseq_strain_signif_mirna", suffix), quote=FALSE)
-
-
-# Plot PCA (colour is strain)
-# PC1 vs PC2
-# plot without labels
-c1c2.strain <- autoplot(pca, data=counts.scaled.deseq.strain.signif.t.metadata, colour='strain', x=1, y=2, scale=scale.) +
-  ggtitle('PCA of samples: pc1 vs pc2') +
-  coord_fixed(ratio=2.5) + 
-  xlab(sprintf("PC1 %.1f %%",eigen[1,2])) + 
-  ylab(sprintf("PC2 %.1f %%",eigen[2,2])) +
-  theme_basic()
-
-# PC2 vs PC3
-# plot without labels
-c2c3.strain <- autoplot(pca, data=counts.scaled.deseq.strain.signif.t.metadata, colour='strain', x=2, y=3, scale=scale.) + 
-  ggtitle('PCA of samples: pc2 vs pc3') +
-  coord_fixed(ratio=1.5) + 
-  xlab(sprintf("PC2 %.1f %%",eigen[2,2])) + 
-  ylab(sprintf("PC3 %.1f %%",eigen[3,2])) +
-  theme_basic()
-
-## COMBINED plots
-c1c2c3.combined <- arrangeGrob(c1c2.strain, c2c3.strain, ncol=2)
-ggsave(paste0("pca_c1c2c3__deseq_strain_signif_mirna.png"), plot=c1c2c3.combined, width=7, height=7, dpi=300)
+# Write the calculated PCA `rotation` (PCA load). This is the table samples (rows) vs PCAs (cols).
+write.csv(pca.reads$rotation, file=paste0(filename.counts,"_reads_PCA_rotation", suffix), quote=FALSE)
 
 
+
+# prepare the data set for plotting
+## Extract STRAIN
+# use grepl to create a logical vector whether WT appears or not in n.
+strain <- ifelse(grepl('WT', colnames(counts.deseq.strain.signif)), 'WT', ifelse(grepl('noEGF', colnames(counts.deseq.strain.signif)), 'A66 no EGF', 'A66'))
+## Extract TIME
+time <- gsub(".*[_]([^.]+)[_].*", "\\1", colnames(counts.deseq.strain.signif))
+# now replace 'noEGF' with '300', as noEGF sample was taken at 300m. 
+time <- gsub('noEGF', '300', time)
+df <- data.frame(pca.reads$rotation, 
+                 strain=strain, 
+                 time=as.numeric(time), 
+                 check.names = FALSE)
+
+# Plot PCA (colour is strain, shape is time)
+plot_pca(df, eigen, filename.counts)
 
 

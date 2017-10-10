@@ -56,10 +56,10 @@ location.pam <- "../6_clustering"
 filename.pam <- "pam_clustering_labels"
 
 
-### Load significant miRNA calculated using DESeq2:strain (padj<=0.05, |lfc|>0.1) && PCA:PC2 (>0.05). These are 89 miRNA (see Venn diagram)
+### Load significant miRNA calculated using DESeq2:strain (padj<=0.05, |lfc|>0.1) && PCA:PC1 (>0.05). These are 89 miRNA (see Venn diagram)
 # select the files containing the data
 location.venn.intersect <- "../6_clustering"
-filename.venn.intersect <- "venn_diagram_intersect__filt_pca_pc2_VS_signif_deseq_strain"
+filename.venn.intersect <- "venn_diagram_intersect__filt_pca_PC1_VS_signif_deseq_strain"
 # load the significant miRNA names 
 miRNA.venn.intersect <- rownames(read.table(paste0(location.venn.intersect,"/",filename.venn.intersect,suffix), sep=",",fill=T,header=T, row.names=1))
 

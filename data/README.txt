@@ -9,4 +9,4 @@
 
 - summarised_mirna_counts_after_mapping_filtered.csv: filtered counts table (used by DESeq)
 
-- summarised_mirna_counts_after_mapping_filtered_metadata.csv: metadata for the filtered counts table (used by DESeq). This is the samples table.
+- summarised_mirna_counts_after_mapping_metadata.csv: metadata for the filtered counts table (used by DESeq). This is the samples table.

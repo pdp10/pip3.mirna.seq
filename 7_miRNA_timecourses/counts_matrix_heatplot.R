@@ -36,20 +36,15 @@ source('../utilities/plots.R')
 
 # select the files containing the data
 location <- "../data"
-filename.counts.log <- "summarised_mirna_counts_after_mapping_filtered_norm_log"
-filename.counts.median.log <- "summarised_mirna_counts_after_mapping_filtered_median_log"
-filename.counts.rlog <- "summarised_mirna_counts_after_mapping_filtered_norm_rlog"
+filename.counts <- "summarised_mirna_counts_after_mapping_filtered_rlog_scaled"
+filename.counts.mean <- "summarised_mirna_counts_after_mapping_filtered_rlog_mean_scaled"
 suffix <-".csv"
 
 # load counts (log)
-counts.log <- read.table(paste0(location,"/", filename.counts.log, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
+counts <- read.table(paste0(location,"/", filename.counts, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
 
 # load log of median counts
-counts.median.log <- read.table(paste0(location,"/", filename.counts.median.log, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
-
-# load counts (rlog)
-counts.rlog <- read.table(paste0(location,"/", filename.counts.rlog, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
-
+counts.mean <- read.table(paste0(location,"/", filename.counts.mean, suffix), sep=",", fill=TRUE, header=TRUE, row.names=1)
 
 
 
@@ -59,15 +54,8 @@ counts.rlog <- read.table(paste0(location,"/", filename.counts.rlog, suffix), se
 #########################################################
 print('plot_counts_matrix_heatmap')
 
-# heatplot for counts.log.scaled (heatplot scales for us)
-# Compute the log first, then apply a z-trasform to N(0, 1) using scale().
-# This works better than just using scale().
-# Z transformation
-plot_counts_matrix_heatplot(counts.log, filename="miRNA_counts_matrix_heatplot__log_scaled_by_row.png", scale='row')
+plot_counts_matrix_heatplot(counts, filename="miRNA_counts_matrix_heatplot__rlog_scaled.png", scale='none')
 
-# heatplot for counts.median (heatplot scales for us) 
-plot_counts_matrix_heatplot(counts.median.log, filename="miRNA_counts_matrix_heatplot__median_log_scaled_by_row.png", scale='none')
-
-# heatplot for rlog(counts) (heatplot scales for us)
-plot_counts_matrix_heatplot(counts.rlog, filename="miRNA_counts_matrix_heatplot__rlog_scaled_by_row.png", scale='row')
+# heatplot for samples (mean of repeats) (heatplot scales for us) 
+plot_counts_matrix_heatplot(counts.mean, filename="miRNA_counts_matrix_heatplot__rlog_mean_scaled.png", scale='none')
 

@@ -123,37 +123,37 @@ split_counts_matrix_by_pam_class <- function(df.wpam, pam.classes) {
 
 
 
-# Calculate the median for each PAM class and strain
-median_for_each_pam_class_and_strain <- function(df.wt.a66, df.a66.noEGF, pam.classes) {
+# Calculate the mean for each PAM class and strain
+mean_for_each_pam_class_and_strain <- function(df.wt.a66, df.a66.noEGF, pam.classes) {
   
-  df.wt.a66.median <- list()
-  df.a66.noEGF.median <- list()
+  df.wt.a66.mean <- list()
+  df.a66.noEGF.mean <- list()
   
   for(pam.class in pam.classes) {
-    dt.median <- median_df_by_colour_id(df=subset(df.wt.a66[[pam.class]], select=-c(id)), 
-                                        filename=paste0('miRNA_wt_a66_tc_cluster_', pam.class, '_median.csv'))
-    df.wt.a66.median[[pam.class]] <- data.frame(dt.median)
-    colnames(df.wt.a66.median[[pam.class]]) <- gsub("^X", "",  colnames(df.wt.a66.median[[pam.class]]))
+    dt.mean <- mean_df_by_colour_id(df=subset(df.wt.a66[[pam.class]], select=-c(id)), 
+                                        filename=paste0('miRNA_wt_a66_tc_cluster_', pam.class, '_mean.csv'))
+    df.wt.a66.mean[[pam.class]] <- data.frame(dt.mean)
+    colnames(df.wt.a66.mean[[pam.class]]) <- gsub("^X", "",  colnames(df.wt.a66.mean[[pam.class]]))
 
-    dt.median <- median_df_by_colour_id(df=subset(df.a66.noEGF[[pam.class]], select=-c(id)), 
-                                        filename=paste0('miRNA_a66noEGF_tc_cluster_', pam.class, '_median.csv'))
-    df.a66.noEGF.median[[pam.class]] <- data.frame(dt.median)
-    colnames(df.a66.noEGF.median[[pam.class]]) <- gsub("^X", "",  colnames(df.a66.noEGF.median[[pam.class]]))
+    dt.mean <- mean_df_by_colour_id(df=subset(df.a66.noEGF[[pam.class]], select=-c(id)), 
+                                        filename=paste0('miRNA_a66noEGF_tc_cluster_', pam.class, '_mean.csv'))
+    df.a66.noEGF.mean[[pam.class]] <- data.frame(dt.mean)
+    colnames(df.a66.noEGF.mean[[pam.class]]) <- gsub("^X", "",  colnames(df.a66.noEGF.mean[[pam.class]]))
   }
   
-  return(list(df.wt.a66.median, df.a66.noEGF.median))
+  return(list(df.wt.a66.mean, df.a66.noEGF.mean))
 }
 
 
 
-# create data table of the median of rows having the same the colour id (column) 
+# create data table of the mean of rows having the same the colour id (column) 
 # return a data table
-median_df_by_colour_id <- function(df, filename) {
+mean_df_by_colour_id <- function(df, filename) {
   # convert data.frame to data.table
   dt <- data.table(df)  
-  # median every column by `colour` class (and for each time point)
-  dt.median <- dt[, lapply(.SD, median), by=colour]
+  # mean every column by `colour` class (and for each time point)
+  dt.mean <- dt[, lapply(.SD, mean), by=colour]
   # save the data.table
-  write.csv(dt.median, file=filename, row.names=F, quote=FALSE)
-  return(dt.median)
+  write.csv(dt.mean, file=filename, row.names=F, quote=FALSE)
+  return(dt.mean)
 }

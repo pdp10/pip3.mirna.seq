@@ -26,8 +26,8 @@
 
 
 
-print('median_norm_miRNA_expr_tc')
-source('median_norm_miRNA_expr_tc.R')
+print('mean_norm_miRNA_expr_tc')
+source('mean_norm_miRNA_expr_tc.R')
 rm(list = ls())
 
 
