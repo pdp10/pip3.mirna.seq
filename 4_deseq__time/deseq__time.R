@@ -140,7 +140,8 @@ dds.res <- DESeq(dds)
 
 time <- c('0','15','40','90','180','300')
 
-for (i in 1:(length(time)-1)) {
+#for (i in 1:(length(time)-1)) {
+i <- 1
   for(j in (i+1):length(time)) {
 
     ############################
@@ -183,4 +184,4 @@ for (i in 1:(length(time)-1)) {
     dev.off()
 
   }
-}
+#}

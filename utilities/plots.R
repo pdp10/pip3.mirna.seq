@@ -223,7 +223,7 @@ plot_deseq_lfc_tc_wpam <- function(deseq2.tc.files, pam.clust.file, filter.vec=c
 # PCA
 #####
 
-# Generic function for plot PCA (PC1, PC2, PC3)
+# Plot PCA with strain and time (PC1, PC2, PC3)
 plot_pca <- function(df, eigen, filename) {
   # PC1 vs PC2
   c1c2.strain.time <- ggplot(df) + 
@@ -237,13 +237,60 @@ plot_pca <- function(df, eigen, filename) {
     labs(x=sprintf("PC2 %.1f %%",eigen[2,2]), y=sprintf("PC3 %.1f %%",eigen[3,2]), shape='time (min)') +
     theme_basic(base_size = 16)
   
+  # PC1 vs PC3
+  c1c3.strain.time <- ggplot(df) + 
+    geom_point(aes(x=PC1, y=PC3, colour=strain, shape=as.factor(time)), size=3) +  
+    labs(x=sprintf("PC1 %.1f %%",eigen[1,2]), y=sprintf("PC3 %.1f %%",eigen[3,2]), shape='time (min)') +
+    theme_basic(base_size = 16)  
   
   ## COMBINED plots
-  c1c2c3.combined <- arrangeGrob(c1c2.strain.time, c2c3.strain.time, ncol=2)
-  ggsave(paste0(filename, "_pca_c1c2c3_combined.png"), plot=c1c2c3.combined, width=11, height=4, dpi=300)
+  c1c2c3.combined <- arrangeGrob(c1c2.strain.time, c2c3.strain.time, c1c3.strain.time, ncol=3)
+  ggsave(filename, plot=c1c2c3.combined, width=17, height=4, dpi=300)
   
   return(c1c2c3.combined)
 }
+
+
+# Plot PCA with PAM clustering (colour is cluster)
+plot_pca_clustering <- function(df, filename, show.labels=FALSE) {
+  
+  # Plot Clustering
+  # PC1 vs PC2
+  c1c2.pam <- ggplot(data=df) + 
+    geom_point(aes(x=PC1, y=PC2, colour=cluster), size=3) +  
+    labs(x="PC1", y="PC2", shape='time (min)') +
+    theme_basic(base_size = 16)
+  
+  # PC2 vs PC3
+  c2c3.pam <- ggplot(data=df) + 
+    geom_point(aes(x=PC2, y=PC3, colour=cluster), size=3) +  
+    labs(x="PC2", y="PC3", shape='time (min)') +
+    theme_basic(base_size = 16)
+  
+  # PC1 vs PC3
+  c1c3.pam <- ggplot(data=df) + 
+    geom_point(aes(x=PC1, y=PC3, colour=cluster), size=3) +  
+    labs(x="PC1", y="PC3", shape='time (min)') +
+    theme_basic(base_size = 16)
+  
+  if(show.labels) {
+    c1c2.pam <- c1c2.pam +
+      geom_text(data=df, aes(x=PC1, y=PC2, label=label),hjust=0,vjust=1, color="black", size=2.5)
+    c2c3.pam <- c2c3.pam +
+      geom_text(data=df, aes(x=PC2, y=PC3, label=label),hjust=0,vjust=1, color="black", size=2.5)
+    c1c3.pam <- c1c3.pam +
+      geom_text(data=df, aes(x=PC1, y=PC3, label=label),hjust=0,vjust=1, color="black", size=2.5)
+    
+    ## COMBINE plots
+    c1c2c3.pam.combined <- arrangeGrob(c1c2.pam, c2c3.pam, c1c3.pam, ncol=3)
+    ggsave(filename, plot=c1c2c3.pam.combined, width=14, height=3.5, dpi=300)
+  } else {
+    ## COMBINED plots
+    c1c2c3.pam.combined <- arrangeGrob(c1c2.pam, c2c3.pam, c1c3.pam, ncol=3)
+    ggsave(filename, plot=c1c2c3.pam.combined, width=14, height=3.5, dpi=300)
+  }  
+}
+
 
 
 
@@ -430,52 +477,6 @@ volcano_plot <- function(deseq2.res, thres.padj = 0.05, thres.lfc = 0.5, title="
 }
 
 
-
-
-
-############
-# Clustering
-############
-
-# Run PAM clustering (colour is cluster)
-plot_clustering <- function(df.pam, df.full, k, filename, labels=FALSE, scale.=FALSE) {
-  
-  # Partition around medoids
-  pamx <- pam(df.pam, k, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
-  
-  # Write the calculated clustering. This is the table miRNAs (rows) vs ClusterLabels (cols).
-  write.csv(pamx$clustering, file=paste0("pam_clustering_labels.csv"), quote=FALSE)
-  
-  # Plot Clustering 
-  # PC1 vs PC2
-  # plot without labels
-  c1c2.pam <- autoplot(pamx, data=df.full, x=1, y=2, center=TRUE, scale=scale.) +
-    ggtitle('PAM clustering of miRNAs') +
-    #coord_fixed(ratio=0.5) +
-    theme_basic()
-  
-  # PC2 vs PC3
-  # plot without labels
-  c2c3.pam <- autoplot(pamx, data=df.full, x=2, y=3, center=TRUE, scale=scale.) +
-    ggtitle('PAM clustering of miRNAs') +
-    #coord_fixed(ratio=0.5) +
-    theme_basic()
-  
-  if(labels) {
-    c1c2.pam <- c1c2.pam +
-      geom_text(aes(label=label),hjust=0,vjust=1, color="black", size=2.5)
-    c2c3.pam <- c2c3.pam +
-      geom_text(aes(label=label),hjust=0,vjust=1, color="black", size=2.5)
-    
-    ## COMBINE plots
-    c1c2c3.pam.combined <- arrangeGrob(c1c2.pam, c2c3.pam, ncol=2)
-    ggsave(paste0(filename, "_plot_w_labels.png"), plot=c1c2c3.pam.combined, width=8, height=3.5, dpi=300)
-  } else {
-    ## COMBINED plots
-    c1c2c3.pam.combined <- arrangeGrob(c1c2.pam, c2c3.pam, ncol=2)
-    ggsave(paste0(filename, "_plot.png"), plot=c1c2c3.pam.combined, width=8, height=3.5, dpi=300)
-  }  
-}
 
 
 

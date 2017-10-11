@@ -152,7 +152,7 @@ df <- data.frame(pca.reads$rotation,
                  strain=strain, time=as.numeric(time), egf=egf, replicate=as.numeric(replicate), 
                  check.names = FALSE)
 # Plot PCA (colour is strain, shape is time)
-plot_pca(df, eigen, filename)
+plot_pca(df, eigen, filename=paste0(filename, "_pca_c1c2c3_combined.png"))
 
 
 
@@ -172,7 +172,7 @@ df.mean <- data.frame(pca.reads.mean$rotation,
                  strain=strain.mean, time=as.numeric(time.mean), egf=egf.mean, 
                  check.names = FALSE)
 # Plot PCA (colour is strain, shape is time)
-plot_pca(df.mean, eigen, filename.mean)
+plot_pca(df.mean, eigen, filename=paste0(filename.mean, "_pca_c1c2c3_combined.png"))
 
 
 

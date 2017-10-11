@@ -127,6 +127,13 @@ write.csv(df.deseq.time.filt, file=paste0("miRNA__filtered_deseq_time__padj_", g
 # CLUSTERING  
 #############
 
+# Run clustering
+# Partition around medoids
+pamx <- pam(counts, clusters, diss=FALSE, metric="euclidean", stand=FALSE, do.swap=TRUE)
+# Write the calculated clustering. This is the table miRNAs (rows) vs ClusterLabels (cols).
+write.csv(pamx$clustering, file=paste0("pam_clustering_labels.csv"), quote=FALSE)
+
+
 # Create vectors of labels when the miRNA is significative ('' otherwise). 
 
 # vector of mirna with filtered PC1
@@ -142,18 +149,18 @@ mirna.pca.PC1.deseq.strain.filt.labels <- ifelse(mirna.deseq.strain.filt.labels 
 mirna.pca.PC1.deseq.time.filt.labels <- ifelse(mirna.deseq.time.filt.labels %in% mirna.pca.PC1.filt.labels, mirna.deseq.time.filt.labels, '')
 
 
-# Unify the data sets (is there a better way to pass the thresholds without adding a new column?? aes, aes_string seem not to work..)
-df.unified.strain <- data.frame(counts, label=mirna.pca.PC1.deseq.strain.filt.labels)
-df.unified.time <- data.frame(counts, label=mirna.pca.PC1.deseq.time.filt.labels)
+
+# create summary data frames to plot
+df.loading.pam <- data.frame(df.pca, cluster=as.factor(pamx$clustering), check.names = FALSE)
 
 # PLOT
 # PC1 and DESeq:Strain
-plot_clustering(df.pam=counts, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_PC1'), labels=FALSE, scale.)
-plot_clustering(df.pam=counts, df.full=df.unified.strain, k=clusters, filename=paste0('pam_clustering_w_deseq_strain_pca_PC1'), labels=TRUE, scale.)
+df.loading.pam$label <- mirna.pca.PC1.deseq.strain.filt.labels
+plot_pca_clustering(df=df.loading.pam, filename=paste0('pam_clustering_w_deseq_strain_pca_PC1_plot_wlabels.png'), show.labels=TRUE)
 
 # PC1 and DESeq:Time
-plot_clustering(df.pam=counts, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_PC1'), labels=FALSE, scale.)
-plot_clustering(df.pam=counts, df.full=df.unified.time, k=clusters, filename=paste0('pam_clustering_w_deseq_time_pca_PC1'), labels=TRUE, scale.)
+df.loading.pam$label <- mirna.pca.PC1.deseq.time.filt.labels
+plot_pca_clustering(df=df.loading.pam, filename=paste0('pam_clustering_w_deseq_time_pca_PC1_plot_wlabels.png'), show.labels=TRUE)
 
 
 
@@ -199,7 +206,6 @@ write.csv(df.PC1.deseq.strain.time.miRNA, file=paste0("venn_diagram_intersect__f
 
 
 
-
 #############################################################################################
 # Generate PCAs for statistically significant miRNA from DESeq:strain (contrast: WT vs A66 in strain)
 #############################################################################################
@@ -236,6 +242,6 @@ df <- data.frame(pca.reads$rotation,
                  check.names = FALSE)
 
 # Plot PCA (colour is strain, shape is time)
-plot_pca(df, eigen, filename.counts)
+plot_pca(df, eigen, paste0(filename.counts, '_deseq_strain_signif.png'))
 
 
